@@ -21,9 +21,11 @@ you pick), and it never uses mock UI.
 
 ## Example
 
-[![aro.day — It fits](examples/aroday-it-fits/thumbnail.jpg)](examples/aroday-it-fits/aroday-it-fits.mp4)
+[![aro.day — It fits (silent preview, click for the MP4 with sound)](examples/aroday-it-fits/preview.gif)](examples/aroday-it-fits/aroday-it-fits.mp4)
 
-▶ [examples/aroday-it-fits/aroday-it-fits.mp4](examples/aroday-it-fits/aroday-it-fits.mp4): a 24s ad for
+▶ **With sound:** [aroday-it-fits.mp4](examples/aroday-it-fits/aroday-it-fits.mp4) (open it, then "View raw"
+or download). The GIF above is a silent preview, because GitHub only plays videos uploaded
+through its web editor. A 24s ad for
 [aro.day](https://aro.day)'s day-capacity meter. Every frame of the product is the real app.
 How it was made, and the six rounds of notes that shaped it: [examples/aroday-it-fits](examples/aroday-it-fits).
 

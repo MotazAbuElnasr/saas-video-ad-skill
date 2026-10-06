@@ -1,8 +1,9 @@
 # Example — aro.day "It fits" (23.9s, 16:9)
 
-[![thumbnail](thumbnail.jpg)](aroday-it-fits.mp4)
+[![silent preview — click for the MP4 with sound](preview.gif)](aroday-it-fits.mp4)
 
-▶ **[aroday-it-fits.mp4](aroday-it-fits.mp4)**: real app footage, HeyGen voice (Ewan), ambient bed, UI sounds, subtitles.
+▶ **[aroday-it-fits.mp4](aroday-it-fits.mp4)**, with sound: real app footage, HeyGen voice (Ewan), ambient bed,
+UI sounds, subtitles. The GIF is a silent preview, because GitHub only plays videos uploaded through its web editor.
 
 | # | On screen | Voice |
 |---|---|---|

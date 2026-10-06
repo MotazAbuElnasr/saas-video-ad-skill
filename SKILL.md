@@ -159,6 +159,7 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 | `scripts/critique.mjs` / `review-sheet.sh` | the automated critic and the visual-review contact sheet |
 | `scripts/build.sh` / `render.sh` | the build pass and the verified render |
 | `scripts/cuts.sh` / `strip.sh` | measure and look at footage |
+| `scripts/gif-preview.sh` | silent GIF preview for READMEs (GitHub won't play repo-hosted MP4s inline) |
 | `templates/` | `ad.config.mjs`, `gen-frames.mjs`, `capture.scene.ts` |
 | `references/` | `intake.md`, `script.md`, `capture.md`, `best-practices.md`, `lessons.md`, `critique.md` |
 | `examples/aroday-it-fits/` | the full aro.day ad: config, frames, storyboard, script, capture scenes, the MP4 |
