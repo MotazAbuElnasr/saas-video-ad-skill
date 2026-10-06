@@ -2,9 +2,12 @@
 // camera move, highlight boxes — all in the pixels. Why baked, not animated in HTML:
 // assemble-index hoists frame videos to the host with STATIC geometry, so a frame-local
 // transform can't follow them.
-// Run (cwd = project root): node <skill>/scripts/bake-clips.mjs
+// Run (cwd = project root): node <skill>/scripts/bake-clips.mjs [--force]
+// Shots bake in parallel and are skipped when their spec + source are unchanged.
 // Shots come from ad.config.mjs → shots(kit). Output: assets/shot-<frameId>.mp4
-import { execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { config, kit } from './timing.mjs';
 
 // A full-screen 1:1 shot of the 1920×1080 source — the default (lesson: zoom confuses).
@@ -29,8 +32,16 @@ const hex = (c) => `0x${(c ?? '#2563eb').replace('#', '')}`;
 const UP = 2; // upscale before zoompan so moves are sub-pixel smooth
 
 const shots = config.shots({ ...kit, full });
-for (const [id, shot] of Object.entries(shots)) {
+const force = process.argv.includes('--force');
+const jobs = Object.entries(shots).map(([id, shot]) => {
   if (shot.W % 2 || shot.H % 2) throw new Error(`bake: ${id} W/H must be even (libx264)`);
+  const out = `assets/shot-${id}.mp4`;
+  const keyFile = `assets/.shot-${id}.key`;
+  const key = createHash('sha1').update(JSON.stringify(shot) + statSync(`assets/${shot.src}`).mtimeMs + (config.palette?.accent ?? '')).digest('hex');
+  if (!force && existsSync(out) && existsSync(keyFile) && readFileSync(keyFile, 'utf8') === key) {
+    console.log('cached', out);
+    return Promise.resolve();
+  }
   // zoompan, not scale+crop: crop locks its input size at the first frame, so a
   // per-frame scale makes it clamp to 0,0. Pad to the panel aspect so the window never stretches.
   const aspect = shot.W / shot.H;
@@ -38,19 +49,30 @@ for (const [id, shot] of Object.entries(shots)) {
   const ox = (pw - 1920) / 2, oy = (ph - 1080) / 2;
   const sub = (k) => expr(shot, k).replaceAll('T', 'in/60'); // `t` is NaN after these filters
   const S = sub('s'), FX = sub('fx'), FY = sub('fy'), TX = sub('tx'), TY = sub('ty');
+  const still = !(shot.moves ?? []).length && shot.cam0.s === 1 && shot.W === 1920 && shot.H === 1080;
   const vf = [
     'fps=60',
     'tpad=stop_mode=clone:stop_duration=3', // a slower read may outlast the recorded clip
-    `pad=${pw}:${ph}:${ox}:${oy}:color=${hex(config.palette?.canvas ?? '#fafbfc')}`,
-    `scale=${pw * UP}:${ph * UP}:flags=lanczos`,
-    `zoompan=z='${pw}*(${S})/${shot.W}':x='${UP}*((${FX})+${ox}-(${TX})/(${S}))':y='${UP}*((${FY})+${oy}-(${TY})/(${S}))':d=1:s=${shot.W}x${shot.H}:fps=60`,
+    // Full-screen 1:1 shots skip the zoompan path entirely (3–4× faster).
+    ...(still ? [] : [
+      `pad=${pw}:${ph}:${ox}:${oy}:color=${hex(config.palette?.canvas ?? '#fafbfc')}`,
+      `scale=${pw * UP}:${ph * UP}:flags=lanczos`,
+      `zoompan=z='${pw}*(${S})/${shot.W}':x='${UP}*((${FX})+${ox}-(${TX})/(${S}))':y='${UP}*((${FY})+${oy}-(${TY})/(${S}))':d=1:s=${shot.W}x${shot.H}:fps=60`,
+    ]),
     // Highlight boxes switch on by frame number (t is unreliable after zoompan).
     ...(shot.boxes ?? []).map((b) =>
       `drawbox=x=${b.x}:y=${b.y}:w=${b.w}:h=${b.h}:color=${hex(b.color ?? config.palette?.accent)}:t=${b.t ?? 5}:enable='gte(n,${Math.round(b.from * 60)})'`),
     'format=yuv420p',
   ].join(',');
-  const out = `assets/shot-${id}.mp4`;
-  execFileSync('ffmpeg', ['-v', 'error', '-y', '-ss', String(shot.from), '-i', `assets/${shot.src}`, '-t', String(shot.dur),
-    '-vf', vf, '-an', '-c:v', 'libx264', '-crf', '16', '-preset', 'medium', out], { stdio: 'inherit' });
-  console.log('baked', out, `(${shot.dur}s from ${shot.src}@${shot.from})`);
-}
+  return new Promise((ok, fail) => {
+    const p = spawn('ffmpeg', ['-v', 'error', '-y', '-ss', String(shot.from), '-i', `assets/${shot.src}`, '-t', String(shot.dur),
+      '-vf', vf, '-an', '-c:v', 'libx264', '-crf', '16', '-preset', 'veryfast', out], { stdio: ['ignore', 'inherit', 'inherit'] });
+    p.on('exit', (code) => {
+      if (code) return fail(new Error(`bake: ffmpeg failed for ${id}`));
+      writeFileSync(keyFile, key);
+      console.log('baked', out, `(${shot.dur}s from ${shot.src}@${shot.from})`);
+      ok();
+    });
+  });
+});
+await Promise.all(jobs);

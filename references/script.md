@@ -15,6 +15,14 @@ edit words directly.
 | Resolution | the fix, plus a 1–1.5s hold so it reads | 3.5–4s |
 | Brand | name + promise + URL | 3–3.5s |
 
+## Research targets (best-practices.md)
+- Value proposition on screen by **3s**, hook resolved by 6s; the first 5s must work alone (YouTube Skip).
+- **Say the brand by 5s**, while its logo is on screen.
+- ≈ **150 wpm** ≈ 75 words per 30s. Count words; cut words rather than speeding the voice.
+- End: brand + promise + **CTA on screen**; a spoken CTA with an offer ("Start free at …") is
+  recommended by research — propose it, the user decides.
+- One message per ad; plan 6 / 15 / 30s versions.
+
 ## Hooks — offer 5–7, the user picks
 Write them in different registers so the choice is real:
 - a relatable feeling: "Another day. Half the to-do list still there?" (the one picked)

@@ -22,4 +22,9 @@ node "$PLV/transitions.mjs" verify --storyboard ./STORYBOARD.md --index ./index.
 have=$(grep -c "<video" index.html || true)
 echo "footage clips in index: $have"
 [ "$have" -gt 0 ] || { echo "✗ build: index.html has no footage — frames were not regenerated before assemble"; exit 1; }
-npx hyperframes check 2>&1 | grep -E "error\(s\)|text checks|issues across|Check (passed|failed)"
+# check takes ~10s (headless browser); --fast skips it — render.sh + critique still verify the output.
+if [ -z "${SKIP_CHECK:-}" ]; then
+  npx hyperframes check 2>&1 | grep -E "error\(s\)|text checks|issues across|Check (passed|failed)" || true
+else
+  npx hyperframes lint 2>&1 | grep -E "error\(s\)" || true
+fi

@@ -23,6 +23,7 @@ export function makeKit(config) {
   const mono = F.mono?.family ?? 'monospace';
   const brand = config.brand ?? {};
 
+  // bug: true = small corner logo · 'hero' = big lockup (use on the hook) · false = none.
   const base = (id, dur, extraCss, body, js, { bug = true, bg = true, ground = P.ink } = {}) => `<template>
 <style>
   ${fontFaces}
@@ -37,12 +38,16 @@ export function makeKit(config) {
   #f${id}-bug { position: absolute; right: 64px; top: 44px; display: flex; align-items: center; gap: 14px; opacity: .75; }
   #f${id}-bug img { width: 40px; height: 40px; }
   #f${id}-bug span { font-weight: 900; font-size: 36px; letter-spacing: -0.03em; }
+  /* hero lockup for the hook: readable on a phone within the first 5s (ABCD branding) */
+  #f${id}-bug.hero { top: 56px; right: 72px; gap: 20px; opacity: 1; }
+  #f${id}-bug.hero img { width: 92px; height: 92px; }
+  #f${id}-bug.hero span { font-size: 84px; }
   ${extraCss}
 </style>
 <div id="root" data-composition-id="${id}" data-width="1920" data-height="1080" data-duration="${dur}">
   ${bg ? `<div id="f${id}-bg" class="clip" data-start="0" data-duration="${dur}" data-track-index="0"></div>` : ''}
   ${body}
-  ${bug && brand.mark ? `<div id="f${id}-bug"><img src="${brand.mark}" alt=""><span>${brand.name ?? ''}</span></div>` : ''}
+  ${bug && brand.mark ? `<div id="f${id}-bug" class="${bug === 'hero' ? 'f-bug hero' : 'f-bug'}"><img src="${brand.mark}" alt=""><span>${brand.name ?? ''}</span></div>` : ''}
 </div>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <script>

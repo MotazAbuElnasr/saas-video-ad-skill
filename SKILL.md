@@ -11,8 +11,14 @@ HyperFrames: full-screen footage, text as overlay cards, a voice-over that drive
 cue, word-synced subtitles, an ambient bed, a few UI sounds, a composed first frame that
 doubles as the thumbnail.
 
-Built from a long real session making aro.day's ads. Every rule below is a scar —
-**read [references/lessons.md](references/lessons.md) before you write a script or film a shot.**
+Built from published ad research and a long real session making aro.day's ads. **Before
+you write a script or film a shot, read [references/lessons.md](references/lessons.md)** (the
+user's notes, which win any conflict) **and [references/best-practices.md](references/best-practices.md)**
+(the research rules, sources, and how the two were reconciled).
+
+**Fast path** (`scripts/ad.sh`): `new` → `film` → `voice` → `build` → `render` → `critique`, or
+`ad.sh all <out.mp4>`. Each stage is timed, and voice / SFX / shots are cached. Target:
+2–5 minutes per ad after the script is approved.
 
 ## Tools this skill drives
 
@@ -95,6 +101,14 @@ If `fetch-sfx` ran after padding, restore with `pad-voices.mjs --meta-only`.
 4. `npx hyperframes snapshot --at <cue times>` and read `snapshots/contact-sheet.jpg`.
 **Gate:** check passed and the contact sheet reads right at every cue.
 
+### 6½. Critique — before the user sees it
+`node $SKILL/scripts/critique.mjs --render renders/<name>.mp4` (automated; every FAIL blocks)
+and `bash $SKILL/scripts/review-sheet.sh renders/<name>.mp4`. Then dispatch one fresh-eyes
+reviewer sub-agent with the prompt in [references/critique.md](references/critique.md): the
+sheet, the tile-time map, the transcript and the rubric. It writes timestamped notes in the
+user's voice. Fix them, rebuild, and re-run. At most two loops, then show the user what is
+still open.
+
 ### 7. Render — verify the MP4 itself
 `bash $SKILL/scripts/render.sh renders/<name>.mp4` — renders, asserts the engine's
 `videoCount` equals the footage clips, checks audio, writes `-thumbnail.png` (frame 0) and
@@ -111,14 +125,24 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 
 ## Defaults (use unless the brief says otherwise)
 
-- Footage **full screen at 1:1**; emphasis by a baked highlight ring (`boxes`), not zoom.
-  If a zoom is unavoidable: ≤ 1.4×, eased, and never during a gesture.
+- Footage **full screen at 1:1**; emphasis by a baked highlight ring (`boxes`). Zoom only with a
+  reason, to make something small readable while nothing moves there: one eased move, hold,
+  then out before the next action. **Never during a gesture** (the critic FAILs it).
+- Hook over **live** footage (research: open mid-action), value proposition by 3s.
+- **Brand said by 5s**, with the `hero` logo lockup on the hook frame (`base(..., { bug: 'hero' })`).
+- Voice ≈ 150 wpm (≈ 75 words per 30s). Cards ≤ 42 chars per line, held ≥ chars ÷ 18 s.
+- End card: brand, promise, and the URL / CTA on screen. A spoken CTA is the user's call (intake).
 - Text = overlay cards on empty regions; big kinetic type only on non-footage frames.
 - Voice at **speed 1.0**; one idea per line; ~2–4s per footage beat; 1–1.5s hold after the payoff.
 - **Ambient** bed + 4–6 UI SFX on events (drop, warning, state flip, done, logo).
 - Subtitles on, 2–3 words per group, current word highlighted.
 - Frame 0 fully composed (it is the thumbnail). Brand corner bug on non-app frames only.
 - End card on the ink/neutral ground unless the user picks an accent fill.
+
+## Roadmap (not built yet — say so if asked)
+- 9:16 and 1:1 cut-downs: a static crop per beat around the action, inside the platform safe
+  zones in `best-practices.md`. Research says to ship all three formats.
+- 6s and 15s cut-downs from the same project.
 
 ## Files
 
@@ -130,8 +154,11 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 | `scripts/caption-meta.mjs` | spoken spelling → written brand in subtitles |
 | `scripts/frame-kit.mjs` | `makeKit(config)` → `base`, `footage`, `card`, `OVER` for frame files |
 | `scripts/post-assemble.mjs` | lifts frames above hoisted footage so overlays show |
+| `scripts/ad.sh` | one command per stage: `new`, `film`, `voice`, `build`, `render`, `critique`, `all` |
+| `scripts/voice.mjs` | cached TTS → BGM → SFX → pads → durations |
+| `scripts/critique.mjs` / `review-sheet.sh` | the automated critic and the visual-review contact sheet |
 | `scripts/build.sh` / `render.sh` | the build pass and the verified render |
 | `scripts/cuts.sh` / `strip.sh` | measure and look at footage |
 | `templates/` | `ad.config.mjs`, `gen-frames.mjs`, `capture.scene.ts` |
-| `references/` | `intake.md`, `script.md`, `capture.md`, `lessons.md` |
+| `references/` | `intake.md`, `script.md`, `capture.md`, `best-practices.md`, `lessons.md`, `critique.md` |
 | `examples/aroday-it-fits/` | the full aro.day ad: config, frames, storyboard, script, capture scenes, the MP4 |

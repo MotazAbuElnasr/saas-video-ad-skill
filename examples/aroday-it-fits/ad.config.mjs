@@ -2,6 +2,8 @@
 // facts, shots, voice pads. Copied to the HyperFrames project root as ad.config.mjs.
 export default {
   brand: { name: 'aro.day', mark: 'assets/aroday-mark.svg' },
+  // HeyGen "Ewan — Bright & Energetic" (male, user's pick). Speed 1.0: 1.12 sounded rushed.
+  voice: { provider: 'heygen', id: '5f9c155f4108437f970c308c95b06e11', speed: 1.0 },
   // From the app's pearl theme (public/styles/themes.css) — never invented.
   palette: { ink: '#1c2330', cream: '#fafbfc', accent: '#2563eb', alert: '#dc2626', muted: '#a3acbb', rule: '#39414f', canvas: '#fafbfc' },
   fonts: {
@@ -40,6 +42,15 @@ export default {
       { frame: 5, tail: 1.5 },
     ];
   },
+
+  // For the critic: lines that name an on-screen event must land after it (frame-local s).
+  events: [{ frame: 4, word: 'over', at: (marks, dur) => marks.red - (marks.dragFrom + dur(3)) }],
+  // Gestures in the source clips (s) — no shot may start or end inside one.
+  gestures: [
+    { name: 'drag report onto today', src: 'ad-fit-drag.mp4', from: 3.3, to: 3.95 },
+    { name: 'click Schedule anyway', src: 'ad-fit-drag.mp4', from: 6.45, to: 7.0 },
+    { name: 'drag report to Thursday', src: 'ad-fit-move.mp4', from: 2.85, to: 3.45 },
+  ],
 
   // Spoken "aro dot day" (so TTS says the dot) → subtitles show "aro.day".
   captionMerge: [{ spoken: ['aro', 'dot', 'day'], show: 'aro.day' }],

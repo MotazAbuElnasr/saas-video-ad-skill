@@ -3,6 +3,8 @@
 // See examples/aroday-it-fits/ad.config.mjs for a filled-in version.
 export default {
   brand: { name: 'acme.app', mark: 'assets/brand-mark.svg' },
+  // TTS: HeyGen voice id (list: media-use/audio/scripts/heygen-tts.mjs --list) or Kokoro (am_michael…).
+  voice: { provider: 'heygen', id: '<voice-id>', speed: 1.0 },
 
   // From the product's own theme tokens (read the CSS/theme file) — never invented.
   // ink = dark ground + card fill, cream = text on ink, accent = the one highlight colour,

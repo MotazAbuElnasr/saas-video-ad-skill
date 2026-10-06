@@ -48,6 +48,8 @@ Check: text on the accent colour passes contrast (ink-on-blue failed at ~3:1 onc
 - Subtitles on? (Default yes — many ads play muted.)
 - Brand on screen throughout? (Default: corner logo on non-app frames; the app's own logo shows in footage.)
 - End card: line + URL/CTA; background ink (default) or accent fill?
+- Spoken CTA? Research says say it + show it, ideally with an offer ("Start free at …"). Default: propose it; the user decides.
+- Formats: research says ship 16:9 + 9:16 + 1:1 (vertical lifted Shorts view rate > 40%). Only 16:9 is built today — say so.
 - Thumbnail: frame 0 is composed as the thumbnail by default — any preference for what it shows?
 
 ## 9. Run shape
