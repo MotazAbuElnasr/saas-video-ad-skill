@@ -73,7 +73,7 @@ const WARM = '#24211d'; // hook banner + end card ground: the bookends
     #f${id}-c { left: 130px; top: 430px; }
     #f${id}-c .f${id}-label { color: ${P.cream}; opacity: .85; }
     #f${id}-big { font-size: 96px; color: ${P.glow}; margin-top: 12px; }`, footage(id, dur(6)) +
-    card(id, 'c', `<div class="f${id}-label">your 3 timers</div><div id="f${id}-big" class="f${id}-t">wait for you.</div>`, 'clear'), `
+    card(id, 'c', `<div class="f${id}-label">your 3 tasks</div><div id="f${id}-big" class="f${id}-t">wait for you.</div>`, 'clear'), `
     enter('#f${id}-c', ${Math.max(0, cue(6, 'your') - 0.05)});`, ON);
 }
 

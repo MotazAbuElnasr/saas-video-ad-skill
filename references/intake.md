@@ -34,10 +34,11 @@ Check: text on the accent colour passes contrast (ink-on-blue failed at ~3:1 onc
 
 ## 6. Voice
 - On or off? (Off = music + SFX + captions only.)
-- Provider: HeyGen (signed in; better voices) or Kokoro (offline). Run `npx hyperframes auth status` and show it.
+- Provider: Gemini (paid key, best value — Charon), HeyGen (signed in) or Kokoro (offline, free). Run `npx hyperframes auth status` and show it.
 - Gender / tone / a named voice. List 3 matching voices with their one-line descriptions; recommend one.
 - Speed: default **1.0**. 1.12 sounded rushed and "AI-ish".
-- Brand pronunciation: how is the name said? Spell it for TTS ("aro dot day").
+- Energy (Gemini `style`): match the ad. Feature: confident, friendly, lightly upbeat. Break or rest: warm, relaxed. Calm was "very slow"; punchy was "very energetic".
+- Brand pronunciation: how is the name said? Spell it for TTS ("aro dot day"); respell the sound with `saidAs` if the voice gets it wrong, and check Whisper writes it that way.
 
 ## 7. Sound
 - A) Ambient bed + a few UI sounds (recommended — calm, premium; the voice carries the energy)

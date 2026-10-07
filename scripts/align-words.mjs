@@ -4,7 +4,7 @@
 // times from what was heard: LCS anchors on matching words, gaps share their time span.
 import { readFileSync } from 'node:fs';
 
-const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+const norm = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''); // Unicode: Arabic words must not normalise to ""
 
 /** SCRIPT.md → [{ frame, text }] (4-space-indented lines under "## … (Frame N)"). */
 export function scriptLines(path = 'SCRIPT.md') {

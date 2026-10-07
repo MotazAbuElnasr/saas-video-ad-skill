@@ -34,7 +34,7 @@ for (const voice of meta.voices) {
   voice.duration_s = +dur(raw).toFixed(3);
 }
 
-const norm = (s) => s.toLowerCase().replace(/[^a-z0-9-]/g, '');
+const norm = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}-]/gu, '');
 const word = (n, w, nth = 0) => {
   const hit = v(n).words.filter((x) => norm(x.text) === norm(w))[nth];
   if (!hit) throw new Error(`pad-voices: "${w}" is not spoken in frame ${n}`);

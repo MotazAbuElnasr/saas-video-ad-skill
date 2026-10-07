@@ -22,7 +22,7 @@ export const dur = (n) => +voice(n).duration_s.toFixed(3);
 
 /** Start time (frame-local) of the nth occurrence of `word` in frame n's line. */
 export function cue(n, word, nth = 0) {
-  const norm = (s) => s.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const norm = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}-]/gu, '');
   const hits = voice(n).words.filter((w) => norm(w.text) === norm(word));
   if (!hits[nth]) throw new Error(`timing: "${word}" is not spoken in frame ${n}`);
   return +hits[nth].start.toFixed(2);

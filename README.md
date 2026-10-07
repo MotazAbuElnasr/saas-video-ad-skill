@@ -88,7 +88,7 @@ A full rebuild of the example takes about 30s of machine time (render ≈ 22s).
 - HyperFrames CLI + skills: `npx hyperframes skills update product-launch-video`
 - Voices are free by default: Kokoro (local) `af_heart`, its top-graded voice. A HeyGen
   account (`npx hyperframes auth login`) adds more voices and a music/SFX library; its free
-  voice time runs out monthly.
+  voice time runs out monthly. Best value: a Gemini API key (Charon, about a cent per ad).
 
 ## Install
 

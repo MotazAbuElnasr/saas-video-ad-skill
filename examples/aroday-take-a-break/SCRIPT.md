@@ -1,8 +1,7 @@
 # SCRIPT — aroday-take-a-break
 
-**Voice:** Heart (Kokoro af_heart, local, free) — the user: free voices only, female is fine;
-af_heart is Kokoro's top-graded voice (A).
-**Voice settings:** speed 0.8
+**Voice:** Charon (Gemini TTS, gemini-3.8-flash-tts) — the user's pick after listening.
+**Voice settings:** style prompt: "Warm and calm, like a friend reminding you to rest, at a natural conversational pace with short pauses between sentences, not slow. A short product ad voice-over; natural, not an announcer." (v4: the first Charon read was 34s with 1s pauses — the brand landed at 5.5s)
 **Voice direction:** Calm and warm — this is the break ad.
 Spoken brand is written "aro dot day" (TTS drops the dot otherwise).
 
@@ -20,7 +19,7 @@ v3 changes (fresh-eyes review of v2):
 
 **Delivery:** Matter-of-fact, then the question lifts.
 
-    Juggling three tasks in parallel. When did you last look up?
+    Juggling three tasks in parallel, when did you last look up?
 
 ## Line 2 — The reminder (Frame 2)
 
@@ -50,7 +49,7 @@ v3 changes (fresh-eyes review of v2):
 
 **Delivery:** Reassuring.
 
-    Your three timers wait for you.
+    Your three tasks wait for you.
 
 ## Line 7 — Back in (Frame 7)
 

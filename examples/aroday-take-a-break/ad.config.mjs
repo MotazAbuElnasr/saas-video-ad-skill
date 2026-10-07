@@ -6,8 +6,9 @@ const zoomBox = (b) => ({ ...b, x: Math.round(ZOOM.fx + (b.x - ZOOM.fx) * ZOOM.s
 
 export default {
   brand: { name: 'aro.day', mark: 'assets/aroday-mark.svg' },
-  // Free voices only (user). Kokoro af_heart — its top-graded voice (A; males C+). 0.8: slower (user).
-  voice: { provider: 'kokoro', id: 'af_heart', speed: 0.8 },
+  // Gemini Charon (user's pick, after listening; reviews: the top narration voice). Pacing
+  // is a style prompt (speed stays 1); the key comes from the keychain (gemini-api-key).
+  voice: { provider: 'gemini', id: 'Charon', style: 'Warm, friendly and welcoming product-ad read with a relaxed smile in the voice: gently upbeat but not hyped, because the ad is about taking a break. Natural, easy-moving pace with only short pauses, never slow or sleepy. A soft lift on the brand name; the call to action said warmly.', saidAs: [[/\baro\b/gi, 'arrow']] },
   // User: "less, minimal, natural sounds" — a field recording (STORYBOARD music:), mixed low.
   music: { volume: 0.22, sfxVolume: 0.25 },
   look: { entrance: 'rise', card: 'paper', bug: { right: 40, top: 50 } },
@@ -24,6 +25,7 @@ export default {
   marks: {
     reminder: 13.48, // timers cross 25:00 → the "Break time" toast fades in
     click: 15.85,    // cursor starts toward "Start break" (gesture start; it appears at 15.72)
+    startBreak: 17.0, // the click lands: the toast vanishes (toast-region scan)
     orb: 17.08,      // the breathing orb overlay fades in (6s breath cycle starts)
     resume: 36.92,   // after the 5-minute jump: the overlay clears, 3 timers running again
   },
@@ -53,7 +55,7 @@ export default {
     return {
       '01-juggling': full('ad-break-flow.mp4', from(1), dur(1)),
       '02-reminder': full('ad-break-flow.mp4', from(2), dur(2), { boxes: r('toast', marks.reminder - from(2) + 0.15) }),
-      '03-take-five': full('ad-break-flow.mp4', from(3), dur(3), { boxes: [{ ...config.rings.toast, from: 0 }] }),
+      '03-take-five': full('ad-break-flow.mp4', from(3), dur(3), { boxes: [{ ...config.rings.toast, from: 0, to: marks.startBreak - from(3) }] }),
       '04-orb': full('ad-break-flow.mp4', from(4), dur(4)),
       '05-quote': full('ad-break-flow.mp4', from(5), dur(5), { ...zoomIn, boxes: r('quote', 1.0, zoomBox(config.rings.quote)) }),
       '06-timers-wait': full('ad-break-flow.mp4', from(6), dur(6), { ...held, boxes: r('resumes', cue(6, 'three') - 0.1, zoomBox(config.rings.resumes)) }),

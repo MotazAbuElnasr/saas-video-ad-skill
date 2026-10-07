@@ -16,6 +16,7 @@ import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { scriptLines } from './align-words.mjs';
+import { geminiLines } from './gemini-voice.mjs';
 
 const config = (await import(pathToFileURL(resolve('ad.config.mjs')).href)).default;
 const PLV = process.env.PLV_SCRIPTS ?? `${homedir()}/.claude/skills/product-launch-video/scripts`;
@@ -26,6 +27,15 @@ if (!v.id) throw new Error('voice: set ad.config.mjs → voice.id (a HeyGen voic
 // All lines in one wave (engine default 4): Kokoro reloads its model per line, so the
 // wall time is the slowest line, not the sum.
 process.env.HYPERFRAMES_TTS_CONCURRENCY ??= '8';
+// Gemini TTS: the key comes from the macOS keychain (voice.keychain, default "gemini-api-key")
+// when no env key is set — never printed. Pacing is a style prompt, not a speed (engine rule).
+if (v.provider === 'gemini') {
+  if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+    try { process.env.GEMINI_API_KEY = execFileSync('security', ['find-generic-password', '-s', v.keychain ?? 'gemini-api-key', '-w'], { encoding: 'utf8' }).trim(); }
+    catch { throw new Error(`voice: no Gemini key — set GEMINI_API_KEY or save one: security add-generic-password -U -a "$USER" -s ${v.keychain ?? 'gemini-api-key'} -w`); }
+  }
+  v.speed = 1;
+}
 // Kokoro runs through `npx hyperframes tts`, which needs a python with kokoro-onnx + soundfile.
 // video-demo's narration venv has both — reuse it rather than pip-installing into the system python.
 if (v.provider === 'kokoro' && !process.env.HYPERFRAMES_PYTHON) {
@@ -40,7 +50,7 @@ const hash = (s) => createHash('sha1').update(s).digest('hex').slice(0, 12);
 const sb = readFileSync('STORYBOARD.md', 'utf8');
 const spoken = readFileSync('SCRIPT.md', 'utf8').split('\n').filter((l) => /^ {4}\S/.test(l)).join('\n');
 const want = {
-  tts: hash(`${spoken}|${v.provider}|${v.id}|${v.speed}`),
+  tts: hash(`${spoken}|${v.provider}|${v.id}|${v.speed}|${v.style ?? ''}|${v.model ?? ''}|${v.saidAs ?? ''}`),
   bgm: hash(sb.match(/^music:.*$/m)?.[0] ?? ''),
   sfx: hash([...sb.matchAll(/^- sfx:.*$/gm)].map((m) => m[0]).join('\n')),
 };
@@ -63,15 +73,27 @@ if (process.argv.includes('--adopt')) {
 
 const needTts = force || !voicesOk() || keys.tts !== want.tts;
 const needBgm = force || keys.bgm !== want.bgm || !existsSync('assets/bgm/track.mp3');
-if (needTts || needBgm) {
+// Gemini: our own sequential synth (rate limits) + recover-voice for timings; the engine then
+// only fetches the bed, if that changed.
+let geminiDone = false;
+if (needTts && v.provider === 'gemini') {
+  const t0 = Date.now();
+  await geminiLines(v);
+  execFileSync('node', [`${SKILL}/scripts/recover-voice.mjs`], { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, VOICE_LANG: v.lang ?? 'en' } });
+  console.log(`  tts (gemini ${v.id}, ${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+  keys.tts = want.tts; delete keys.padded; delete keys.sfx; save();
+  geminiDone = true;
+}
+if ((needTts && !geminiDone) || needBgm) {
   // Only what changed: a voice-only pass keeps the bed (the engine carries bgm over from its
   // sidecar); re-retrieving an unchanged music prompt cost minutes for nothing.
-  const only = [needTts || !voicesOk() ? 'tts' : null, needBgm ? 'bgm' : null].filter(Boolean).join(',');
+  const only = [(needTts && !geminiDone) || !voicesOk() ? 'tts' : null, needBgm ? 'bgm' : null].filter(Boolean).join(',');
   // A music-only pass can come back with no voices (the engine rebuilds them from its own
   // sidecar, which may be empty) — keep the voices we already have.
   const before = existsSync('audio_meta.json') ? JSON.parse(readFileSync('audio_meta.json', 'utf8')) : null;
   run(only, [`${PLV}/audio.mjs`, '--script', './SCRIPT.md', '--storyboard', './STORYBOARD.md', '--hyperframes', '.',
-    '--out', './audio_meta.json', '--provider', v.provider, '--voice', v.id, '--speed', String(v.speed), '--only', only]);
+    '--out', './audio_meta.json', '--provider', v.provider, '--voice', v.id, '--speed', String(v.speed), '--only', only,
+    ...(v.style ? ['--style', v.style] : []), ...(v.model ? ['--tts-model', v.model] : [])]);
   if (!only.includes('tts') && before?.voices?.length && !voicesOk()) {
     const after = JSON.parse(readFileSync('audio_meta.json', 'utf8'));
     writeFileSync('audio_meta.json', JSON.stringify({ ...after, voices: before.voices, padded: before.padded }, null, 2));
@@ -116,7 +138,7 @@ if (force || keys.sfx !== want.sfx || !keys.padded || keys.pads !== padsKey) {
   // word, marks }) → { [frame]: seconds into that frame }. word() is the padded, frame-local start.
   if (config.sfxAt) {
     const v = (n) => m.voices.find((x) => x.frame === n);
-    const norm = (t) => t.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const norm = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}-]/gu, '');
     const word = (n, w) => v(n).words.find((x) => norm(x.text) === norm(w))?.start ?? 0;
     const at = config.sfxAt({ dur: (n) => v(n).duration_s, word, marks: config.marks ?? {} });
     for (const s of m.sfx ?? []) if (at[s.frame] != null) s.offset_s = Math.max(0, +at[s.frame].toFixed(3));

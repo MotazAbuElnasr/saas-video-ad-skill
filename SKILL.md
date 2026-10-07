@@ -27,6 +27,7 @@ user's notes, which win any conflict) **and [references/best-practices.md](refer
 | [video-demo](https://github.com/nilbuild/video-demo) | films the app from a pinned build, seeded + mocked, real cursor | `npx skills add nilbuild/video-demo` (engine + Chromium) |
 | [HyperFrames](https://github.com/heygen-com/hyperframes) CLI + `product-launch-video` skill | storyboard, TTS/BGM/SFX, captions, assembly, render | `npx hyperframes skills update product-launch-video` |
 | HeyGen account (optional) | better voices + music library | `npx hyperframes auth login` (user runs it — browser OAuth). Offline: Kokoro + MusicGen |
+| Gemini API key (optional, paid) | best-value natural voices (`Charon`) | aistudio.google.com → API key; the user saves it: `security add-generic-password -U -a "$USER" -s gemini-api-key -w` |
 | ffmpeg, Node ≥ 22 | baking shots, measuring footage | |
 
 This skill's scripts live in `scripts/` and always run with **cwd = the HyperFrames project root**.
@@ -76,9 +77,12 @@ onto muted text, and dark ink onto a blue fill — fix in `frame.md`). Write `ST
 ### 5. Audio — one cached command
 `bash $SKILL/scripts/ad.sh voice` (`voice.mjs`): TTS → bed → SFX → pads → mix → durations, each
 step skipped when its inputs are unchanged. What it handles (each cost a rebuild):
-- **Voice:** `ad.config.mjs → voice: { provider, id, speed }`. Free default: Kokoro `af_heart`
-  at 0.8 (its A-graded voice; the male voices grade C+). Kokoro needs a python with
-  kokoro-onnx — `voice.mjs` reuses video-demo's venv; lines run 8 at a time (~30s for 8 lines).
+- **Voice:** `ad.config.mjs → voice: { provider, id, speed, style, saidAs }`. Paid best value:
+  Gemini `Charon` — energy and pace come from `style` (speed stays 1), matched to the ad
+  (lessons #10); `saidAs` respells for TTS only (`[[/\baro\b/gi, 'arrow']]`). One line at a
+  time with the API's retry-in, cached per line, each take trimmed to 0.08s lead / 0.12s tail.
+  Free default: Kokoro `af_heart` at 0.8 (its A-graded voice; the male voices grade C+). Kokoro
+  needs a python with kokoro-onnx — `voice.mjs` reuses video-demo's venv; lines run 8 at a time.
   It fails if any SCRIPT line came back missing (the engine drops failed lines silently).
 - **Words:** Whisper timings mapped onto the SCRIPT's words (`align-words.mjs`) — captions and
   `cue()` never see "Arrow" for "aro" or "25" for "twenty-five".
@@ -149,11 +153,11 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 - Hook over **live** footage (research: open mid-action), value proposition by 3s.
 - **Brand said by 5s**, with a hero lockup on the hook frame (`bug: 'hero'`, or your own
   lockup marked `data-brand="hero"`), and the logo pill on every footage frame after it.
-- Voice ≈ 150 wpm (≈ 75 words per 30s). Cards ≤ 42 chars per line, held ≥ chars ÷ 18 s.
+- Voice ≈ 150–180 wpm (≈ 75–90 words per 30s). Cards ≤ 42 chars per line, held ≥ chars ÷ 18 s.
 - End card: brand, promise, and the CTA **shown and said** ("Start free at <brand>") — the
   user asked for the research's version; the pill appears as it's said; ≥ 1.5s hold.
 - Text = overlay cards on empty regions; big kinetic type only on non-footage frames.
-- Free voice (Kokoro `af_heart`, 0.8) unless the user has a paid one; one idea per line, split
+- Gemini `Charon` with an ad-matched style when a key exists, else Kokoro `af_heart` (0.8); one idea per line, split
   at its event; ~2–4s per footage beat; 1–1.5s hold after the payoff; no 2s silences.
 - Bed: a quiet field recording or ambient texture (≈0.2–0.3) + a few SFX on events.
 - Subtitles on, merged to ≥ 0.6s groups, current word highlighted, hidden where on-screen type

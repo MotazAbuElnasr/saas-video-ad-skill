@@ -18,8 +18,8 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | 7 | **Never cut inside a gesture.** A drag split across two cuts was "disturbing"; zoom in/out + cuts during cause→effect made the app "hard to follow". One continuous take from approach to result. | v1, v3 notes |
 | 8 | **Hold the payoff.** "Done." was on screen 0.6s — "very fast cut". 1–1.5s hold after the payoff line. | "I need few moment after second 15" |
 | 9 | **Voice lands after the event it names.** "Over by an hour" was said before the meter turned red. | "over by an hour is not synced" |
-| 10 | **Natural voice speed.** 1.12× felt rushed; 1.0 reads as a person. | "can we try slow down the english" |
-| 11 | **Pronounce the brand.** "aro.day" was read "aro day". Spell it for TTS ("aro dot day"), show it written in subtitles. | "it said aro (silent) day" |
+| 10 | **Voice pace = speed 1.0 + an energy matched to the ad.** 1.12× time-stretched Kokoro felt rushed; a calm, unhurried Gemini style felt "very slow"; an energetic, punchy one was "very energetic" for a break ad. Feature ads: "confident, friendly, lightly upbeat, brisk, no hype". A break ad: "warm, relaxed smile, gently upbeat, easy-moving". | "can we try slow down the english", "It's very slow I need it more like ad, energetic, convencing welcoming", "very energitic 😃 … it's ad about the break" |
+| 11 | **Pronounce the brand.** "aro.day" was read "aro day". Spell it for TTS ("aro dot day"), show it written in subtitles. The brand sounds "arrow dot day": Gemini read the spelling "AH-roh" while Whisper still wrote "aro.day", so that check passed and was wrong. Respell the sound for TTS only (`voice.saidAs: [[/\baro\b/gi, 'arrow']]`) and check that Whisper writes "arrow.day". | "it said aro (silent) day", "he didn't say aro dot day" |
 | 12 | **Subtitles help clarity.** Turn them on; 2–3 words per group. | "can we add more subtitles to make it clear" |
 | 13 | **Brand visible throughout.** Corner logo on non-app frames; the app's own logo covers footage frames. | "we need app logo … visible all over the video" |
 | 14 | **First frame = thumbnail.** Compose frame 0 fully (no fade-from-black, no dimmed text). | "I need a good thumbnail in the first frame" |
@@ -38,7 +38,7 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | 27 | **Free features show free-tier UI.** A PRO badge next to "Start free" invites the question. | reviewer, break v2 |
 | 28 | **"Natural sounds" = a field recording.** "Natural ambience, no melody" retrieved a pad chord with birds on top (it swelled to voice level). Check the bed's spectrogram — sustained horizontal bands are notes — before using it. No impact / riser in a calm ad; each effect lands ON its event (`sfxAt`). | "less, minimal? natural sounds?", reviewer |
 | 29 | **A series looks similar, not the same.** Keep the brand system (logo, type, real UI, CTA, subtitles); vary per ad: the app theme the footage is filmed in, the accent (from that theme or the feature — orb amber, terminal green), the entrance (`slam` / `rise` / `type` / `wipe`), the card style (`ink` / `paper` / `outline` / `clear`), the hook layout (headline over the app / banner / text in an empty column), the end card, the bed. | "I need some variations, not all ads look the same", "similar but not the same" |
-| 30 | **Free voices only** (no subscriptions). Kokoro `af_heart` is its top-graded voice (A); its male voices grade C+. Speed 0.8 for the "slower" read. HeyGen's free voice time runs out monthly. | "free voices only", "if kokoro female voice is okay we can use it", "just see online reviews" |
+| 30 | **Voices: free first, then the best value.** Free: Kokoro `af_heart` is its top-graded voice (A); its male voices grade C+; HeyGen's free voice time runs out monthly. Paid, chosen after listening: Gemini TTS `Charon` (about a cent per ad; the key lives in the keychain). | "free voices only", "just see online reviews", "ok Charon" |
 | 31 | **Say the CTA and show it.** "Start free at aro dot day." on the end card, the CTA pill appearing as it's said. | "use the best practices from research" |
 | 32 | **A claim must survive the app's own framing.** "One free hour in this day" was contradicted by the day timeline, which pads an hour each side of the workday (18–19 looked just as free). Narrow the claim ("your workday") and shade what it excludes — on a dark UI with a light veil (black shading vanished on the black timeline). | reviewer, Schedule for me v1 |
 | 33 | **Cursor discipline.** Hidden until it acts (a parked cursor sat in the thumbnail), pre-positioned off the cards (crossing them lit hover chips and tooltips), hidden and moved off after the last click (the payoff hold lit the new card's chips). | reviewer, Schedule v1 |
@@ -46,6 +46,7 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | 35 | **Say the UI word as it happens.** "Open its menu… and hit Schedule for me" ran 1–2s ahead while the cursor idled. "From its menu:" lands as the menu opens; "Schedule for me" as the cursor reaches it; cut the take's idle time at the source (tighter scene), not in the edit. | reviewer, Schedule v1 |
 | 36 | **Zoom on the proof, after the gesture.** The menu text and the timeline label were 3–4px tall on a phone. One eased zoom once nothing moves; rings and shading drawn before the camera (`pre`) so they zoom with the app. | reviewer, Schedule v1 |
 | 37 | **Keep subtitles out of YouTube's Skip zone** (bottom-right, from 0:05) for in-stream ads — and out of an open menu's way. | reviewer, Schedule v1 |
+| 38 | **Hooks hit hard.** A headline that only fades or rises over footage is not catchy. Use kinetic type on the hook: words slam in with blur and overshoot, and the key word gets a glitch or shake on impact. Calm ads keep it softer, never static. | "I NEED MORE ANIMATION HERE? TO BE MORE CATCHY, LIKE AGRESSIVE ANUMATION AND EFFECTS OF TYPOGRAPHY" |
 
 ## How to work with the user (process)
 
@@ -93,3 +94,11 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | Small UI text smeared after upload; ~1 Mbps master | the default encode; jpg frame extraction | `render.sh`: `--video-bitrate 8M --video-frame-format png` |
 | Bed swelled then hard-cut under the end card's fade | the mix ignores the picture's fade | `render.sh` fades the mix over the last 0.6s |
 | The menu ring turned off before the click; a chip ring outlived its chip | rings ran per shot without end times | `to` per box; carry a ring across a seam into the next shot |
+| Gemini TTS 429 "3 requests per minute" | free tier; the engine sends lines in parallel | `gemini-voice.mjs`: one line at a time, waiting the API's "retry in Ns" |
+| Gemini TTS 402 mid-run | prepaid credits ran out | per-line cache (`.hyperframes/gemini-lines.json`): a re-run resumes, nothing re-bought |
+| Gemini voice has no word timings | the API returns audio only | `recover-voice.mjs` (Whisper) → `align-words.mjs` |
+| "Breathe" landed 1s late after a calmer re-voice | each Gemini take carries 0.2–0.5s of silence, different every take | `gemini-voice.mjs` trims every take to a 0.08s lead / 0.12s tail |
+| Arabic words vanished from cues and captions | `[^a-z0-9]` normalisers deleted non-Latin letters | Unicode `\p{L}\p{N}` everywhere; `voice.lang` makes Whisper use `small` + `--language` |
+| Critic warned "rushed" on every line | 3.0 words/s counted "aro dot day" as three words | brand counted once; WARN above 3.5/s |
+| Cursor froze during a drag | a pointer-event drag cancels the compat mouse events the cursor overlay follows | mirror synthetic `mousemove` events during manual drags (video-demo scene) |
+| App hover card covered the drop target | the strip's pointer drag cancels the mousedown that closes it (a product bug) | dispatch a `mousedown` on the dragged element, and file the bug |

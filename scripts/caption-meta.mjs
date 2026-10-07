@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { config } from './timing.mjs';
 
 const meta = JSON.parse(readFileSync('audio_meta.json', 'utf8'));
-const bare = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+const bare = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 const rules = config.captionMerge ?? [];
 for (const v of meta.voices) {
   const out = [];
@@ -15,7 +15,7 @@ for (const v of meta.voices) {
     const rule = rules.find((r) => r.spoken.every((s, k) => v.words[i + k] && bare(v.words[i + k].text) === bare(s)));
     if (!rule) { out.push(v.words[i]); continue; }
     const last = v.words[i + rule.spoken.length - 1];
-    const trailing = last.text.match(/[^a-z0-9]+$/i)?.[0] ?? ''; // keep "day." → "aro.day."
+    const trailing = last.text.match(/[^\p{L}\p{N}]+$/u)?.[0] ?? ''; // keep "day." → "aro.day."
     out.push({ ...v.words[i], text: rule.show + trailing, end: last.end });
     i += rule.spoken.length - 1;
   }

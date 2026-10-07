@@ -35,9 +35,12 @@ for (const v of voices) {
     add('FAIL', 'fractions', `frame ${v.frame}: fractional time "${s}"`, '"without halfs to make it simple"', 'whole numbers; re-seed the app so the UI shows them');
   if (config.brand?.name?.includes('.') && s.toLowerCase().includes(config.brand.name.toLowerCase()))
     add('FAIL', 'brand-tts', `frame ${v.frame}: "${config.brand.name}" spoken as written — TTS drops the dot`, '"it said aro (silent) day"', 'spell it ("aro dot day") + captionMerge');
-  const words = v.words.length, talk = v.words.length ? v.words.at(-1).end - v.words[0].start : 0;
-  if (talk > 0 && words / talk > 3.0)
-    add('WARN', 'rushed', `frame ${v.frame}: ${(words / talk).toFixed(1)} words/s (> 3.0) — reads rushed`, '"can we try slow down the english"', 'TTS speed 1.0, or cut words');
+  // A merged brand ("aro dot day") is said as one name, so it counts as one word. 3.5/s: a
+  // lively Gemini read sat at 3.0–3.4 and was fine; 1.12× time-stretched Kokoro read rushed.
+  const merged = (config.captionMerge ?? []).reduce((n, r) => n + (s.toLowerCase().split(r.spoken.join(' ')).length - 1) * (r.spoken.length - 1), 0);
+  const words = v.words.length - merged, talk = v.words.length ? v.words.at(-1).end - v.words[0].start : 0;
+  if (talk > 0 && words / talk > 3.5)
+    add('WARN', 'rushed', `frame ${v.frame}: ${(words / talk).toFixed(1)} words/s (> 3.5) — reads rushed`, '"can we try slow down the english"', 'TTS speed 1.0, or cut words');
 }
 const speedM = readFileSync('SCRIPT.md', 'utf8').match(/speed[^\d]*(\d+(\.\d+)?)/i);
 if (speedM && +speedM[1] > 1.05) add('WARN', 'tts-speed', `TTS speed ${speedM[1]}`, '"slow down the english"', 'use 1.0');
@@ -48,7 +51,7 @@ if (config.brand?.name?.includes('.') && !(config.captionMerge ?? []).length)
 let t = 0, brandAt = null;
 const brandTok = (config.captionMerge?.[0]?.spoken?.[0] ?? config.brand?.name?.split(/[.\s]/)[0] ?? '').toLowerCase();
 for (const v of voices) {
-  const hit = brandTok && v.words.find((w) => w.text.toLowerCase().replace(/[^a-z0-9]/g, '').startsWith(brandTok));
+  const hit = brandTok && v.words.find((w) => w.text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').startsWith(brandTok));
   if (hit && brandAt === null) brandAt = t + hit.start;
   t += v.duration_s;
 }
@@ -83,7 +86,7 @@ if (lastFootage) {
 }
 for (const e of config.events ?? []) {
   const v = voices.find((x) => x.frame === e.frame);
-  const w = v?.words.find((x) => x.text.toLowerCase().replace(/[^a-z0-9]/g, '') === e.word.toLowerCase());
+  const w = v?.words.find((x) => x.text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') === e.word.toLowerCase());
   if (!w) { add('WARN', 'event-word', `event "${e.word}" not spoken in frame ${e.frame}`, '', 'fix config.events'); continue; }
   const d = w.start - e.at(config.marks ?? {}, (n) => voices.find((x) => x.frame === n).duration_s);
   if (d < -0.05) add('FAIL', 'voice-ahead', `frame ${e.frame}: "${e.word}" is said ${(-d).toFixed(2)}s BEFORE the event it names`, '"over by an hour is not synced with the video"', 'pads(): lead so the word lands just after the event');
