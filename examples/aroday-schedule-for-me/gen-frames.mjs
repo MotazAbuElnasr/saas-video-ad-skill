@@ -102,7 +102,7 @@ const pulse = (id, d) => `tl.fromTo(q('#f${id}-slot'), { opacity: 1 }, { opacity
 }
 
 // 06 — end card: near-black, the tagline typed with a blinking block cursor, then the CTA
-// pill as it is said; holds (pad) before the fade. Subtitles hidden (captionMoves).
+// pill as it is said; holds to the last frame (no fade to blank: the CTA is what lingers). Subtitles hidden (captionMoves).
 {
   const id = '06-brand';
   const tag = 'type it. it finds the time.';
@@ -125,8 +125,7 @@ const pulse = (id, d) => `tl.fromTo(q('#f${id}-slot'), { opacity: 1 }, { opacity
     enter('#f${id}-tag', 0.45);
     // cursor blink (GSAP, not CSS: renders seek the timeline, CSS animations would drift)
     tl.to(q('#f${id}-cur'), { opacity: 0, duration: 0.45, ease: 'steps(1)', repeat: ${Math.max(1, Math.floor((dur(6) - 1.6) / 0.45))}, yoyo: true }, ${0.45 + (tag.length + 1) * 0.035});
-    hit('#f${id}-cta', ${cue(6, 'start') - 0.06}, { from: 1.6, blur: 10 });
-    tl.to(q('#f${id}-all'), { opacity: 0, duration: 0.35, ease: 'power2.in' }, ${dur(6) - 0.4});`, { bug: false });
+    hit('#f${id}-cta', ${cue(6, 'start') - 0.06}, { from: 1.6, blur: 10 });`, { bug: false });
 }
 
 rmSync('compositions/frames', { recursive: true, force: true });

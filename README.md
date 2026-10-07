@@ -39,7 +39,8 @@ entrance, the card style, the hook layout, the end card, the bed — while the b
 |---|---|---|
 | It fits | pearl theme, blue, slam type, ink cards, ink end card, ambient bed | [MP4](examples/aroday-it-fits/aroday-it-fits.mp4) |
 | Take a break | pearl theme, amber from the app's breathing orb, rise type, paper cards, orb end card, birdsong | [MP4](examples/aroday-take-a-break/aroday-take-a-break.mp4) |
-| Schedule for me | terminal theme, phosphor green, kinetic hook (outline → slam, glitch, inverted bar), outline cards, a zoom on the proof, rain | [MP4](examples/aroday-schedule-for-me/aroday-schedule-for-me.mp4) |
+| Schedule for me | terminal theme, phosphor green, kinetic hook (outline → slam, glitch, inverted bar), outline cards, a zoom on the proof, rain |
+| Day overview | mocha theme at UI zoom 1.5, outline headline wiping in word by word, a hit on "landed", highlighter, espresso card, a push-in on the strip, cafe ambience | [MP4](examples/aroday-plan-my-day/aroday-plan-my-day.mp4) | [MP4](examples/aroday-schedule-for-me/aroday-schedule-for-me.mp4) |
 
 ## How it works
 

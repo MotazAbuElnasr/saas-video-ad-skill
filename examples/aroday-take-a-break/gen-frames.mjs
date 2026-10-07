@@ -89,7 +89,7 @@ const WARM = '#24211d'; // hook banner + end card ground: the bookends
 }
 
 // 08 — the orb end card (cut in): breathing amber glow, lockup, the tagline WITH the voice, the
-// CTA as it is said; holds ≥ 1.5s (pad) before the fade. Subtitles hidden.
+// CTA as it is said; holds ≥ 1.5s (pad) to the last frame — no fade to blank. Subtitles hidden.
 {
   const id = '08-brand';
   frames[id] = base(id, dur(8), `
@@ -113,8 +113,7 @@ const WARM = '#24211d'; // hook banner + end card ground: the bookends
     tl.to(q('#f${id}-orb'), { scale: 0.8, opacity: 0.7, duration: 3, ease: 'sine.inOut' }, 3);
     enter('#f${id}-lock', 0.1);
     enter('#f${id}-line', ${cue(8, 'focus') - 0.12});
-    enter('#f${id}-cta', ${cue(8, 'start') - 0.12});
-    tl.to(q('#f${id}-all'), { opacity: 0, duration: 0.35, ease: 'power2.in' }, ${dur(8) - 0.4});`, { bug: false, ground: WARM });
+    enter('#f${id}-cta', ${cue(8, 'start') - 0.12});`, { bug: false, ground: WARM });
 }
 
 rmSync('compositions/frames', { recursive: true, force: true });

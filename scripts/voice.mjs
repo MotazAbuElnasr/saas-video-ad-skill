@@ -94,7 +94,9 @@ if ((needTts && !geminiDone) || needBgm) {
   run(only, [`${PLV}/audio.mjs`, '--script', './SCRIPT.md', '--storyboard', './STORYBOARD.md', '--hyperframes', '.',
     '--out', './audio_meta.json', '--provider', v.provider, '--voice', v.id, '--speed', String(v.speed), '--only', only,
     ...(v.style ? ['--style', v.style] : []), ...(v.model ? ['--tts-model', v.model] : [])]);
-  if (!only.includes('tts') && before?.voices?.length && !voicesOk()) {
+  // Always, not only when they went missing: the engine re-transcribes the voices it rebuilds with
+  // its English Whisper — Arabic lines came back as garbage words and lost their aligned timings.
+  if (!only.includes('tts') && before?.voices?.length) {
     const after = JSON.parse(readFileSync('audio_meta.json', 'utf8'));
     writeFileSync('audio_meta.json', JSON.stringify({ ...after, voices: before.voices, padded: before.padded }, null, 2));
     console.log('  kept existing voices (music-only pass)');
@@ -116,11 +118,11 @@ if (force || keys.sfx !== want.sfx || !keys.padded || keys.pads !== padsKey) {
     // a whole voiceover. Snapshot and restore.
     const before = JSON.parse(readFileSync('audio_meta.json', 'utf8'));
     run('sfx', [`${PLV}/audio.mjs`, 'fetch-sfx', '--storyboard', './STORYBOARD.md', '--hyperframes', '.']);
-    if (!voicesOk() && before.voices?.length) {
-      const after = JSON.parse(readFileSync('audio_meta.json', 'utf8'));
-      writeFileSync('audio_meta.json', JSON.stringify({ ...after, voices: before.voices, padded: before.padded }, null, 2));
-      console.log('  kept existing voices (sfx pass)');
-    }
+    // An sfx pass never changes the voices: it rebuilt them from the sidecar (once: none at all;
+    // for Arabic: English-Whisper garbage) and dropped the pad record, so pad-voices took the
+    // PADDED wavs for fresh raws and padded them twice (an ad grew 17.8s → 21.8s).
+    const after = JSON.parse(readFileSync('audio_meta.json', 'utf8'));
+    if (before.voices?.length) writeFileSync('audio_meta.json', JSON.stringify({ ...after, voices: before.voices, padded: before.padded }, null, 2));
     keys.sfx = want.sfx; save();
   }
   // fetch-sfx rewrote audio_meta.json → re-pad (pad-voices always works from NN.raw.wav).
@@ -135,7 +137,7 @@ if (force || keys.sfx !== want.sfx || !keys.padded || keys.pads !== padsKey) {
   if (m.bgm && config.music?.volume != null) m.bgm.volume = config.music.volume;
   if (config.music?.sfxVolume != null) for (const s of m.sfx ?? []) s.volume = config.music.sfxVolume;
   // An effect lands ON its event (the click, the orb), not at the frame start, and ends with it:
-  // config.sfxAt({ dur, word, marks }) → { [frame]: seconds into that frame | { at, dur, vol } }.
+  // config.sfxAt({ dur, word, marks }) → { [frame]: seconds into that frame | { at, dur, vol } | [...] }.
   // word() is the padded, frame-local start. Without a dur an effect may run 1s past its frame
   // (a click near a cut finishes) and is then cut with a fade-out: stock effects are long loops —
   // a 44s typing loop ran under the rest of an ad. Never past the ad's end.
@@ -147,8 +149,11 @@ if (force || keys.sfx !== want.sfx || !keys.padded || keys.pads !== padsKey) {
     const word = (n, w) => v(n).words.find((x) => norm(x.text) === norm(w))?.start ?? 0;
     const at = config.sfxAt ? config.sfxAt({ dur: (n) => v(n).duration_s, word, marks: config.marks ?? {} }) : {};
     const probe = (f) => +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f], { encoding: 'utf8' });
+    const nth = {}; // two effects in one frame (a swipe, then the pop on the drop): an array, in the order of that frame's `sfx: a, b` line
     for (const s of m.sfx ?? []) {
-      const a = typeof at[s.frame] === 'object' ? at[s.frame] : { at: at[s.frame] };
+      const k = (nth[s.frame] = (nth[s.frame] ?? -1) + 1);
+      const one = Array.isArray(at[s.frame]) ? at[s.frame][k] : at[s.frame];
+      const a = one != null && typeof one === 'object' ? one : { at: one };
       if (a.at != null) s.offset_s = Math.max(0, +a.at.toFixed(3));
       if (a.vol != null) s.volume = a.vol;
       s.src ??= s.file; // the fetched original: every run re-cuts from it
@@ -166,3 +171,5 @@ if (force || keys.sfx !== want.sfx || !keys.padded || keys.pads !== padsKey) {
   writeFileSync('audio_meta.json', JSON.stringify(m, null, 2));
 }
 run('sync-durations', [`${PLV}/audio.mjs`, 'sync-durations', '--audio-meta', './audio_meta.json', '--storyboard', './STORYBOARD.md']);
+// A listener hears every take against its script line (cached per take; the critic reports it).
+execFileSync('node', [`${SKILL}/scripts/listen.mjs`], { stdio: ['ignore', 'inherit', 'inherit'] });

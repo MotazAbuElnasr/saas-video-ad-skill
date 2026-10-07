@@ -15,7 +15,9 @@ for (const v of meta.voices) {
     const rule = rules.find((r) => r.spoken.every((s, k) => v.words[i + k] && bare(v.words[i + k].text) === bare(s)));
     if (!rule) { out.push(v.words[i]); continue; }
     const last = v.words[i + rule.spoken.length - 1];
-    const trailing = last.text.match(/[^\p{L}\p{N}]+$/u)?.[0] ?? ''; // keep "day." → "aro.day."
+    // keep "day." → "aro.day." — except right to left, where the period of a Latin brand ending
+    // the line jumps to its left and read ".aro.day"
+    const trailing = /^(ar|he|fa|ur)\b/.test(config.voice?.lang ?? '') ? '' : last.text.match(/[^\p{L}\p{N}]+$/u)?.[0] ?? '';
     out.push({ ...v.words[i], text: rule.show + trailing, end: last.end });
     i += rule.spoken.length - 1;
   }

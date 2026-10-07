@@ -62,7 +62,9 @@ the UI shows the script's numbers, then film **one scene per beat** from
 - whole gestures in one take (approach → grab → drag → drop → result), never start mid-drag;
 - no camera moves in capture (`spotlight`/`focus` off) — framing happens later, and mostly doesn't;
 - after filming, **measure** event times with `bash $SKILL/scripts/cuts.sh assets/*.mp4`
-  and **look** at them with `strip.sh` — recorder marks drift by 0.5–2s.
+  and **look** at them with `strip.sh` — recorder marks drift by 0.5–2s;
+- film the **merged** product: `ad.sh film` reuses the checkout's last `dist/` build — point the
+  workspace (`.origin` appRoot + the `app` link) at a worktree of origin/main, `DEMO_BUILD=1`.
 **Gate:** stills read correctly (numbers, states) and marks are measured.
 
 ### 4. HyperFrames project + storyboard
@@ -71,7 +73,8 @@ write `BRIEF.md`, show `npx hyperframes auth status` verbatim, build `frame.md` 
 (`build-frame.mjs --preset <p>`), then **check its colour remap by eye** (it once mapped red
 onto muted text, and dark ink onto a blue fill — fix in `frame.md`). Write `STORYBOARD.md` +
 `SCRIPT.md` (copy the shape from [examples/aroday-it-fits](examples/aroday-it-fits)), with
-`sfx:` per frame and `music:` in the frontmatter. Stage footage + fonts into `assets/`.
+`sfx:` per frame (comma-separate two effects in one frame), a `- duration:` line under each
+voiceover (sync-durations fills them) and `music:` in the frontmatter. Stage footage + fonts into `assets/`.
 **Gate:** storyboard approved (optionally after a `storyboard.html` sketch sheet).
 
 ### 5. Audio — one cached command
@@ -94,6 +97,9 @@ step skipped when its inputs are unchanged. What it handles (each cost a rebuild
   `dur` an effect is cut 1s past its frame — stock effects are long loops.
 - **Pads:** `pads({ dur, word, marks })` — `word(n, w)` aims a lead so that word lands just
   after its event. Pads are re-applied from `NN.raw.wav`, so changing one never re-buys TTS.
+- **Listener:** `listen.mjs` (Gemini, needs a key) hears every take against its script line —
+  cached per take; the critic FAILs a mismatch ("no crash" for "no clash", a garbled brand).
+  `regen-line.mjs <frame> <regex> [tries]` retakes one Gemini line until the listener agrees.
 - No TTS left (quota)? `recover-voice.mjs` rebuilds the timings from the wavs on disk.
 Never pass `--help` to the engine's `audio.mjs` — it isn't a help flag; it runs a full paid generation.
 
@@ -105,6 +111,9 @@ Never pass `--help` to the engine's `audio.mjs` — it isn't a help flag; it run
      — use `enter(el, at)` in frames; the corner logo is an ink pill placed clear of the app's controls;
    - kinetic type for hooks and payoffs (lessons #38): `hit(el, at, { from, blur })` slams a word in
      on its spoken cue, `shake(group, at, amp)`, `glitch(el, at)`, `flash(at, alpha)` — all seek-safe;
+   - right to left (lessons #43): `look.dir: 'rtl'` (wipes/typing from the right), `fonts.script`
+     (e.g. `'"SF Arabic", "Geeza Pro"'`, local faces added), the `f<id>-rtl` class on Arabic text,
+     `voice.lang: 'ar'` (multilingual timings, RTL subtitles);
    - `palette.captionAccent` / `captionInk` — subtitle highlight + box per ad;
    - `captionMoves({ dur, cue, first })` → `{ from, to, x, y }` / `{ from, to, hide: true }`;
      move or hide only at a frame's `first()` word; `captionMaxChars` for a narrow text zone;
@@ -191,7 +200,9 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 | `scripts/frame-kit.mjs` | `makeKit(config)` → `base`, `footage`, `card`, `OVER`, `enter` (per-ad look) |
 | `scripts/post-assemble.mjs` | lifts frames above hoisted footage so overlays show |
 | `scripts/ad.sh` | one command per stage: `new`, `film`, `voice`, `build`, `render`, `critique`, `all` |
-| `scripts/voice.mjs` | cached TTS → BGM → SFX → pads → durations |
+| `scripts/voice.mjs` | cached TTS → BGM → SFX → pads → durations → listener |
+| `scripts/gemini-voice.mjs` | Gemini TTS, one line at a time, cached per line, takes trimmed |
+| `scripts/listen.mjs` / `regen-line.mjs` | a Gemini listener for every take; retake one line until it is heard right |
 | `scripts/critique.mjs` / `review-sheet.sh` | the automated critic and the visual-review contact sheet |
 | `scripts/build.sh` / `render.sh` | the build pass and the verified render |
 | `scripts/cuts.sh` / `strip.sh` | measure and look at footage |
@@ -199,4 +210,4 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 | `templates/` | `ad.config.mjs`, `gen-frames.mjs`, `capture.scene.ts` |
 | `references/` | `intake.md`, `script.md`, `capture.md`, `best-practices.md`, `lessons.md`, `critique.md` |
 | `examples/aroday-it-fits/` | the full aro.day ad: config, frames, storyboard, script, capture scenes, the MP4 |
-| `examples/aroday-take-a-break/`, `examples/aroday-schedule-for-me/` | two more looks of the series (calm amber; terminal) |
+| `examples/aroday-take-a-break/`, `examples/aroday-schedule-for-me/`, `examples/aroday-plan-my-day/` | more looks of the series (calm amber; terminal + glitch; mocha + editorial wipes) |

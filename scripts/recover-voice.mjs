@@ -14,10 +14,11 @@ meta.voices = [];
 for (const { frame: f, text } of scriptLines()) {
   const path = `assets/voice/${String(f).padStart(2, '0')}.wav`;
   if (!existsSync(path)) throw new Error(`recover-voice: missing ${path}`);
-  // VOICE_LANG (voice.lang): English gets the fast English model; any other language the
-  // multilingual one, told the language (Whisper's English model can't hear Arabic).
+  // VOICE_LANG (voice.lang): English gets the English model (small: base.en's word starts ran
+  // ~0.3s late — the subtitle highlight lagged); any other language the multilingual one, told
+  // the language (Whisper's English model can't hear Arabic).
   const lang = process.env.VOICE_LANG ?? 'en';
-  execFileSync('npx', ['hyperframes', 'transcribe', path, '--json', '-m', lang === 'en' ? 'base.en' : 'small', ...(lang === 'en' ? [] : ['--language', lang])], { stdio: ['ignore', 'pipe', 'ignore'] });
+  execFileSync('npx', ['hyperframes', 'transcribe', path, '--json', '-m', lang === 'en' ? 'small.en' : 'small', ...(lang === 'en' ? [] : ['--language', lang])], { stdio: ['ignore', 'pipe', 'ignore'] });
   const heard = JSON.parse(readFileSync('assets/voice/transcript.json', 'utf8'));
   const words = align(text.split(/\s+/), heard);
   meta.voices.push({ frame: f, path, duration_s: +dur(path).toFixed(3), words });

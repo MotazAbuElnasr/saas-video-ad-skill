@@ -13,7 +13,7 @@ export default {
   // is a style prompt (speed stays 1); the key comes from the keychain (gemini-api-key).
   voice: { provider: 'gemini', id: 'Charon', style: 'Confident, friendly and welcoming product-ad read, lightly upbeat with a smile. Natural, brisk pace with short pauses, never slow, never hyped or shouty. Lift on the brand name; say the call to action with a smile. A little playful.', saidAs: [[/\baro\b/gi, 'arrow']] },
   music: { volume: 0.2, sfxVolume: 0.25 }, // rule 16: less music
-  look: { entrance: 'type', card: 'outline', bug: { left: 26, top: 994 } }, // pill bottom-left: the rail is empty there (top-right is the timeline)
+  look: { entrance: 'type', card: 'outline', bug: { left: 760, top: 6 } }, // the header's empty stretch, clear before and after the zoom (top-right sat on Sign in + the calendar chip; bottom-left is YouTube's ad badge)
   // From the app's terminal theme (public/styles/themes.css): bg #0a0b0a, accent #5ef07a.
   palette: { ink: '#050705', cream: '#eafbe9', accent: '#5ef07a', captionAccent: '#5ef07a', alert: '#ff5c5c', muted: '#8a9a8c', rule: '#2a3a2c', canvas: '#0a0b0a' },
   fonts: {

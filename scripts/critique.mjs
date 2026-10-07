@@ -20,6 +20,10 @@ const frameIds = [...sb.matchAll(/src: compositions\/frames\/([\w-]+)\.html/g)].
 const footageIds = new Set(Object.keys(config.shots ? config.shots({ dur: () => 1, cue: () => 0, marks: config.marks ?? {}, full: (s, f, d, e = {}) => ({ src: s, from: f, dur: d, W: 1920, H: 1080, ...e }), config }) : {}));
 
 // ── Script / voice ──────────────────────────────────────────────────────────
+// listen.mjs (run by voice.mjs): a listener heard each take against its script line.
+const heard = existsSync('.hyperframes/listen.json') ? JSON.parse(readFileSync('.hyperframes/listen.json', 'utf8')) : {};
+for (const [f, h] of Object.entries(heard)) if (h.match === false)
+  add('FAIL', 'heard', `frame ${f}: heard "${h.heard}" for "${h.said}"${h.issues ? ` — ${h.issues}` : ''}`, '"he didn\'t say aro dot day" · reviewer: "no crash"', 'retake the line (regen-line.mjs) or respell it (voice.saidAs)');
 const hook = voices[0] ? spoken(voices[0]) : '';
 if (/\b(unlike|other (apps|tools)|than (your|other)|vs\.?|instead of|most (apps|tools|planners)|doesn'?t know)\b/i.test(hook))
   add('FAIL', 'comparison-hook', `hook compares: "${hook}"`, '"don\'t start by comparing"', 'open on a feeling or question the viewer recognises');
@@ -31,7 +35,8 @@ for (const v of voices) {
   const s = spoken(v);
   for (const re of AI_ISMS) if (re.test(s))
     add('WARN', 'ai-ism', `frame ${v.frame}: "${s}" matches ${re}`, '"this is very aish"', 'say it plainly, like a person');
-  if (/\b(and a half|half an? hours?|quarter|\d+\.\d+\s*(h|hours?))\b/i.test(s))
+  // Arabic too: «نص ساعة» half an hour, «ساعة ونص» an hour and a half, «ربع ساعة» a quarter hour
+  if (/\b(and a half|half an? hours?|quarter|\d+\.\d+\s*(h|hours?))\b|(نص|نصف|ربع)\s*(ساعة|ساعه)|(ساعة|ساعه)\s*و\s*(نص|نصف|ربع)/i.test(s))
     add('FAIL', 'fractions', `frame ${v.frame}: fractional time "${s}"`, '"without halfs to make it simple"', 'whole numbers; re-seed the app so the UI shows them');
   if (config.brand?.name?.includes('.') && s.toLowerCase().includes(config.brand.name.toLowerCase()))
     add('FAIL', 'brand-tts', `frame ${v.frame}: "${config.brand.name}" spoken as written — TTS drops the dot`, '"it said aro (silent) day"', 'spell it ("aro dot day") + captionMerge');
@@ -65,7 +70,8 @@ else if (!hookHtml.includes('f-bug hero') && !hookHtml.includes('data-brand="her
 const allWords = voices.reduce((n, v) => n + v.words.length, 0);
 if (allWords / total * 30 > 80) add('WARN', 'words-per-30s', `${Math.round(allWords / total * 30)} words per 30s (target ≈ 75 — about 150 wpm)`, 'research: VO pace', 'cut words, not speed');
 const endWords = voices.at(-1) ? spoken(voices.at(-1)).toLowerCase() : '';
-if (!/\b(try|start|get|visit|download|sign up|join|free|today)\b/.test(endWords))
+// Arabic CTAs too (ابدأ start · جرب try · سجل sign up · حمّل download · مجان free): \b is ASCII-only
+if (!/\b(try|start|get|visit|download|sign up|join|free|today)\b|ابدأ|جرب|سجل|حمّل|حمل|مجان/.test(endWords))
   add('WARN', 'no-cta', `the last line has no spoken call to action ("${voices.at(-1) ? spoken(voices.at(-1)) : ''}")`, 'research: say the CTA + show it; the user decides', 'e.g. "Start free at <brand>" — ask before adding');
 
 // ── Pacing / holds / sync ───────────────────────────────────────────────────

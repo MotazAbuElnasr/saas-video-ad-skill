@@ -1,4 +1,4 @@
-# aro.day — Take a break (v9)
+# aro.day — Take a break (v11)
 
 Calm look: the app's pearl theme filmed live, amber from its own breathing orb, rise entrances, paper cards, a dark warm hook banner that bookends the orb end card, a birdsong field recording. Gemini Charon voice: a warm, relaxed read (calm was "very slow", punchy was "very energetic"); says "arrow dot day".
 

@@ -11,7 +11,7 @@ export default {
   voice: { provider: 'gemini', id: 'Charon', style: 'Warm, friendly and welcoming product-ad read with a relaxed smile in the voice: gently upbeat but not hyped, because the ad is about taking a break. Natural, easy-moving pace with only short pauses, never slow or sleepy. A soft lift on the brand name; the call to action said warmly.', saidAs: [[/\baro\b/gi, 'arrow']] },
   // User: "less, minimal, natural sounds" — a field recording (STORYBOARD music:), mixed low.
   music: { volume: 0.22, sfxVolume: 0.25 },
-  look: { entrance: 'rise', card: 'paper', bug: { right: 40, top: 50 } },
+  look: { entrance: 'rise', card: 'paper', bug: { left: 760, top: 6 } }, // the header's empty stretch (top-right sat on the Active Now bar)
   // accent: amber dark enough for rings/borders on the light board; glow: the orb's own amber
   // (--bo-amber) for type on the dark break screen; warm ink for the subtitle box (navy clashed).
   palette: { ink: '#1f2328', cream: '#fffaf2', accent: '#e8930c', glow: '#ffb347', captionAccent: '#ffb347', captionInk: '#24211d', alert: '#dc2626', muted: '#a3acbb', rule: '#6b5a40', canvas: '#fafbfc' },

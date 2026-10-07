@@ -15,9 +15,15 @@
 export function makeKit(config) {
   const P = { ink: '#1c2330', cream: '#fafbfc', accent: '#2563eb', alert: '#dc2626', muted: '#a3acbb', rule: '#39414f', ...config.palette };
   const F = config.fonts ?? {};
+  // fonts.script: a family for another script (Arabic), joined after the brand fonts so Latin
+  // stays Inter and Arabic letters fall through to it — e.g. '"SF Arabic", "Geeza Pro"'.
+  // System fonts need a local() face (the check fails "font_family_without_font_face", and the
+  // renderer only supplies declared fonts); the weight range keeps the variable axis (no faux bold).
+  const script = F.script ? `${F.script}, ` : '';
   const fontFaces = [
     ...Object.entries(F.display?.files ?? {}).map(([w, src]) => `@font-face { font-family: "${F.display.family}"; font-weight: ${w}; src: url("${src}") format("woff2"); }`),
     ...Object.entries(F.mono?.files ?? {}).map(([w, src]) => `@font-face { font-family: "${F.mono.family}"; font-weight: ${w}; src: url("${src}") format("woff2"); }`),
+    ...(F.script?.match(/"[^"]+"/g) ?? []).map((q) => `@font-face { font-family: ${q}; src: local(${q}); font-weight: 100 900; }`),
   ].join('\n  ');
   const display = F.display?.family ?? 'sans-serif';
   const mono = F.mono?.family ?? 'monospace';
@@ -33,10 +39,12 @@ export function makeKit(config) {
   const base = (id, dur, extraCss, body, js, { bug = true, bg = true, ground = P.ink } = {}) => `<template>
 <style>
   ${fontFaces}
-  #root { position: absolute; inset: 0; overflow: hidden; font-family: "${display}", sans-serif; color: ${P.cream}; }
+  #root { position: absolute; inset: 0; overflow: hidden; font-family: "${display}", ${script}sans-serif; color: ${P.cream}; }
   #f${id}-bg { position: absolute; inset: 0; background: ${ground}; }
   .f${id}-t { position: absolute; font-weight: 900; letter-spacing: -0.045em; line-height: .9; white-space: nowrap; }
-  .f${id}-label { position: absolute; font-family: "${mono}", monospace; font-size: 28px; letter-spacing: .14em; text-transform: uppercase; color: ${P.muted}; white-space: nowrap; }
+  .f${id}-label { position: absolute; font-family: "${mono}", ${script}monospace; font-size: 28px; letter-spacing: .14em; text-transform: uppercase; color: ${P.muted}; white-space: nowrap; }
+  /* right-to-left text (Arabic): letter-spacing breaks joined letters, so it is zeroed */
+  .f${id}-rtl { direction: rtl; unicode-bidi: isolate; letter-spacing: 0 !important; text-transform: none !important; }
   /* overlay card: text over the full-screen app, legible on any UI behind it */
   .f${id}-card { position: absolute; background: ${P.ink}f0; border-radius: 8px; padding: 26px 40px 30px; box-shadow: 0 18px 50px rgba(0,0,0,.25); }
   .f${id}-card .f${id}-t, .f${id}-card .f${id}-label { position: static; display: block; }
@@ -92,17 +100,20 @@ export function makeKit(config) {
     // immediateRender false: a fromTo applies its FROM at t=0 — the frame sat tinted until the hit.
     const flash = (at, a = 0.3) => tl.fromTo(q('#f${id}-flash'), { opacity: a }, { opacity: 0, duration: 0.22, ease: 'power2.out', immediateRender: false }, at);
     // enter: the ad's entrance (config.look.entrance) — use it for every overlay entrance.
+    // look.dir 'rtl': wipes and typing reveal from the right, the way the text reads. Negative
+    // insets leave room outside the box: a 0.9 line-height clipped the "y" of "your whole day".
+    const HIDE = ${JSON.stringify(look.dir === 'rtl' ? 'inset(-25% -8% -40% 100%)' : 'inset(-25% 100% -40% -8%)')}, SHOW = 'inset(-25% -8% -40% -8%)';
     const enter = (el, at) => {
       const e = ${JSON.stringify(look.entrance)};
       if (e === 'rise') return tl.fromTo(q(el), { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, at);
-      if (e === 'wipe') return tl.fromTo(q(el), { opacity: 1, clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.45, ease: 'power3.out' }, at);
+      if (e === 'wipe') return tl.fromTo(q(el), { opacity: 1, clipPath: HIDE }, { clipPath: SHOW, duration: 0.45, ease: 'power3.out' }, at);
       if (e === 'type') {
         tl.fromTo(q(el), { opacity: 0 }, { opacity: 1, duration: 0.12 }, at);
         let t = at + 0.08;
         const parts = [...q(el).querySelectorAll('.f${id}-t, .f${id}-label')];
         for (const n of parts.length ? parts : [q(el)]) {
           const k = Math.max(1, n.textContent.length);
-          tl.fromTo(n, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: k * 0.035, ease: 'steps(' + k + ')' }, t);
+          tl.fromTo(n, { clipPath: HIDE }, { clipPath: SHOW, duration: k * 0.035, ease: 'steps(' + k + ')' }, t);
           t += k * 0.035;
         }
         return tl;

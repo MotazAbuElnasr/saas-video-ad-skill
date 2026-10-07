@@ -50,6 +50,17 @@ const accent = config.palette?.captionAccent ?? config.palette?.accent;
 if (accent) html = html.replace(/--cap-accent: [^;]+;/, `--cap-accent: ${accent};`);
 if (config.palette?.captionInk) html = html.replace(/--cap-ink: [^;]+;/, `--cap-ink: ${config.palette.captionInk};`);
 
+// ── script / direction ──
+// fonts.script joins every caption font stack (Inter has no Arabic glyphs); an RTL voice
+// (voice.lang ar | he | fa | ur) reads right-to-left, and letter-spacing breaks joined letters.
+const script = config.fonts?.script;
+if (script) html = html.replace(/font-family: ([^;]+);/g, (m, fam) => (fam.includes(script) ? m : `font-family: ${fam.replace(',', `, ${script},`)};`));
+// system fonts need a local() face, like frame-kit's (the check fails without one)
+if (script && !html.includes('/* script faces */'))
+  html = html.replace('<style>', `<style>\n      /* script faces */ ${(script.match(/"[^"]+"/g) ?? []).map((q) => `@font-face { font-family: ${q}; src: local(${q}); font-weight: 100 900; }`).join(' ')}`);
+if (/^(ar|he|fa|ur)\b/.test(config.voice?.lang ?? '') && !html.includes('/* rtl */'))
+  html = html.replace('  .caption-group {', '  /* rtl */ .caption-group { direction: rtl; } .caption-group, .caption-word { letter-spacing: 0 !important; }\n  .caption-group {');
+
 // ── moves / hides ──
 const first = (n) => meta().voices.find((v) => v.frame === n)?.words[0]?.start ?? 0;
 const moves = typeof config.captionMoves === 'function' ? config.captionMoves({ dur, cue, first }) : (config.captionMoves ?? []);
