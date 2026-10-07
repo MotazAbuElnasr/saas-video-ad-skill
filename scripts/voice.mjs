@@ -1,8 +1,9 @@
 // The voice stage, cached: TTS + BGM → SFX → pads → durations, each skipped when its
 // inputs are unchanged (TTS is paid and the slowest step — never re-buy an unchanged line).
 // Voice settings come from ad.config.mjs → voice: { provider, id, speed }.
-// Run (cwd = project root): node <skill>/scripts/voice.mjs [--force | --adopt]
+// Run (cwd = project root): node <skill>/scripts/voice.mjs [--force | --adopt | --recut]
 // --adopt: record the current audio as cached (projects voiced before caching) — runs nothing.
+// --recut: Gemini one-take ads — cut the cached whole-script take into lines again (free).
 //
 // Order is load-bearing (each cost a rebuild):
 // - TTS and BGM run in ONE audio.mjs pass (`--only tts,bgm`): a separate `--only bgm`
@@ -72,14 +73,16 @@ if (process.argv.includes('--adopt')) {
   process.exit(0);
 }
 
-const needTts = force || !voicesOk() || keys.tts !== want.tts;
-const needBgm = force || keys.bgm !== want.bgm || !existsSync('assets/bgm/track.mp3');
+const recut = process.argv.includes('--recut');
+const needTts = force || recut || !voicesOk() || keys.tts !== want.tts;
+// music: none = no bed to fetch (the wrapper's silent path would delete audio_meta.json)
+const needBgm = !/^music:\s*none\s*$/mi.test(sb) && (force || keys.bgm !== want.bgm || !existsSync('assets/bgm/track.mp3'));
 // Gemini: our own sequential synth (rate limits) + recover-voice for timings; the engine then
 // only fetches the bed, if that changed.
 let geminiDone = false;
 if (needTts && v.provider === 'gemini') {
   const t0 = Date.now();
-  await geminiLines(v);
+  await geminiLines(v, { recut });
   execFileSync('node', [`${SKILL}/scripts/recover-voice.mjs`], { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, VOICE_LANG: v.lang ?? 'en' } });
   console.log(`  tts (gemini ${v.id}, ${((Date.now() - t0) / 1000).toFixed(1)}s)`);
   keys.tts = want.tts; delete keys.padded; delete keys.sfx; save();
@@ -92,7 +95,12 @@ if ((needTts && !geminiDone) || needBgm) {
   // A music-only pass can come back with no voices (the engine rebuilds them from its own
   // sidecar, which may be empty) — keep the voices we already have.
   const before = existsSync('audio_meta.json') ? JSON.parse(readFileSync('audio_meta.json', 'utf8')) : null;
-  run(only, [`${PLV}/audio.mjs`, '--script', './SCRIPT.md', '--storyboard', './STORYBOARD.md', '--hyperframes', '.',
+  // The wrapper ignores --only and always runs the engine with tts,bgm: a music-only pass gets NO
+  // lines, or it re-synthesizes every line one by one over our takes (a fresh Gemini project lost
+  // its one-performance voice to six separate takes, timed to the old words).
+  const script = only.includes('tts') ? './SCRIPT.md' : '.hyperframes/no-lines.md';
+  if (!only.includes('tts')) writeFileSync(script, '');
+  run(only, [`${PLV}/audio.mjs`, '--script', script, '--storyboard', './STORYBOARD.md', '--hyperframes', '.',
     '--out', './audio_meta.json', '--provider', v.provider, '--voice', v.id, '--speed', String(v.speed), '--only', only,
     ...(v.style ? ['--style', v.style] : []), ...(v.model ? ['--tts-model', v.model] : [])]);
   // Always, not only when they went missing: the engine re-transcribes the voices it rebuilds with
