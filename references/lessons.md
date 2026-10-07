@@ -164,3 +164,4 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | A new stage default didn't show | the bake cache key hashed only the shot spec | the key includes the stage defaults (`bake-clips.mjs`) |
 | A panel at z 1.68 looked soft | z > 1 upscales the baked panel | `s` = the largest size in the shot, `z ≤ 1` |
 | A slow drift stopped dead at a cut | each shot eased its own move in and out | `stage.ease: 'linear'` for drifts across cuts |
+| The thumbnail showed the hook's accent bar before its word; a carried-over colour flashed for one frame at a cut | a `tl.set(…, 0)` is not rendered on frame 0 of a composition | initial states in CSS (`transform: scaleX(0)`, the colour); frame-kit notes it |

@@ -51,8 +51,11 @@ for (const v of voices) {
     add('WARN', 'rushed', `frame ${v.frame}: ${(words / talk).toFixed(1)} words/s (> 3.5) — reads rushed`, '"can we try slow down the english"', 'TTS speed 1.0, or cut words');
   // and the other way: a "measured, premium narration" style read a long line at 2.4/s — the user
   // called the ad slow; the brisk read that fixed it ran 2.7–2.9 (short lines skip the check)
-  else if (words >= 8 && talk > 0 && words / talk < 2.6 && v.frame !== voices.at(-1)?.frame) // the CTA may take its time
-    add('WARN', 'slow-read', `frame ${v.frame}: ${(words / talk).toFixed(1)} words/s (< 2.6) — reads slow`, '"it\'s slow"', 'a brisk style (lessons #62), or fewer words');
+  // 0.4s allowed per sentence break: a "Ten tasks. Zero left over. Your week, planned." payoff pauses on purpose
+  else if (words >= 8 && talk > 0 && v.frame !== voices.at(-1)?.frame) { // the CTA may take its time
+    const pace = words / Math.max(0.5, talk - 0.4 * Math.max(0, (s.match(/[.!?](\s|$)/g) ?? []).length - 1));
+    if (pace < 2.6) add('WARN', 'slow-read', `frame ${v.frame}: ${pace.toFixed(1)} words/s (< 2.6) — reads slow`, '"it\'s slow"', 'a brisk style (lessons #62), or fewer words');
+  }
 }
 const speedM = readFileSync('SCRIPT.md', 'utf8').match(/speed[^\d]*(\d+(\.\d+)?)/i);
 if (speedM && +speedM[1] > 1.05) add('WARN', 'tts-speed', `TTS speed ${speedM[1]}`, '"slow down the english"', 'use 1.0');

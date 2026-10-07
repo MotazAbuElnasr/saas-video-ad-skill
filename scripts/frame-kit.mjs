@@ -11,6 +11,9 @@
 //   before every assemble (build.sh does).
 // - Footage frames are transparent (OVER) and post-assemble.mjs lifts frames above video,
 //   so overlays draw on top of the full-screen app.
+// - Initial states go in CSS, never `tl.set(…, 0)`: frame 0 is drawn before a set at 0 renders —
+//   a hook's accent bar showed on the thumbnail, and a carried-over colour flashed for a frame at
+//   the cut. (fromTo tweens are fine: they apply their FROM state at creation.)
 
 // One face per family in fonts.script: a bundled file when fonts.scriptFiles names one (a variable
 // woff2 — one file covers 100–900), else the system font via local(). Every family needs a face:
