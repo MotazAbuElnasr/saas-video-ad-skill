@@ -89,7 +89,9 @@ step skipped when its inputs are unchanged. What it handles (each cost a rebuild
 - **Bed:** retrieved only when `music:` changes, mixed at `music.volume` (≈0.2–0.3). For
   "natural sounds" ask for a *field recording* and look at its spectrogram before using it —
   steady horizontal bands are notes (a "natural ambience" query returned a pad chord).
-- **SFX:** one per event, placed ON the event with `sfxAt()`; no impact/riser in calm ads.
+- **SFX:** one per event, placed ON the event with `sfxAt()`; no impact/riser in calm ads. Each ends
+  with its action: `sfxAt` → `{ at, dur, vol }` (typing until the input parses, quiet); without a
+  `dur` an effect is cut 1s past its frame — stock effects are long loops.
 - **Pads:** `pads({ dur, word, marks })` — `word(n, w)` aims a lead so that word lands just
   after its event. Pads are re-applied from `NN.raw.wav`, so changing one never re-buys TTS.
 - No TTS left (quota)? `recover-voice.mjs` rebuilds the timings from the wavs on disk.

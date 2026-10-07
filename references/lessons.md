@@ -47,6 +47,7 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | 36 | **Zoom on the proof, after the gesture.** The menu text and the timeline label were 3–4px tall on a phone. One eased zoom once nothing moves; rings and shading drawn before the camera (`pre`) so they zoom with the app. | reviewer, Schedule v1 |
 | 37 | **Keep subtitles out of YouTube's Skip zone** (bottom-right, from 0:05) for in-stream ads — and out of an open menu's way. | reviewer, Schedule v1 |
 | 38 | **Hooks hit hard.** A headline that only fades or rises over footage is not catchy. Use kinetic type on the hook, synced to the voice (`frame-kit`: `hit`, `shake`, `glitch`, `flash`). Each word slams in on its spoken cue, and the key word lands with a flash, a shake and a glitch, then inverts on an accent bar. Frame 0 stays composed: the headline waits in outline and fills as it is said. Calm ads keep it softer, never static. Example: Schedule for me v7. | "I NEED MORE ANIMATION HERE? TO BE MORE CATCHY, LIKE AGRESSIVE ANUMATION AND EFFECTS OF TYPOGRAPHY" |
+| 39 | **Effects end with their action.** A 44s typing loop ran under the rest of an ad; a clock kept ticking 3s into the next beat. Bind a sound to its action (`sfxAt` → `{ at, dur, vol }`: typing until the input parses, at 0.12); anything else is cut 1s past its frame. | "typing is still there it's very noisy" |
 
 ## How to work with the user (process)
 
@@ -105,3 +106,4 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | The whole hook sat under a green tint | a GSAP `fromTo` applies its FROM state at creation (`immediateRender`) | `flash()` uses `immediateRender: false`; `hit()` relies on it to hide a word until its cue |
 | Check failed `text_not_painted` on outline text | a transparent fill reads as invisible text | `background-image: linear-gradient(transparent, transparent)` + `background-clip: text`, the checker's form for intentional transparency |
 | `content_overlap` on words that slam in | a word blown up mid-hit overlaps its neighbours | `data-layout-allow-overlap` on the kinetic lines |
+| An effect played to the end of its file (44s typing under the whole ad; check: audio past the root duration) | stock effects are long loops; the mix placed the whole file | `voice.mjs` cuts each effect with a fade-out: `dur` when `sfxAt` gives one, else 1s past its frame, never past the ad |

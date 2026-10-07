@@ -91,7 +91,9 @@ export default {
   // Effects ON their events: typing, the click, the landing.
   sfxAt({ dur, marks }) {
     const t3 = T3(marks), t4 = t3 + dur(3), t5 = t4 + dur(4);
-    return { 3: 0, 4: Math.max(0, marks.click - t4), 5: Math.max(0, marks.booked - t5) };
+    // typing: only while keys are pressed (until the 1h chip parses), and quiet — a 44s loop
+    // ran under the rest of the ad ("typing is still there it's very noisy")
+    return { 3: { at: 0, dur: marks.chip - t3, vol: 0.12 }, 4: Math.max(0, marks.click - t4), 5: Math.max(0, marks.booked - t5) };
   },
 
   // Subtitles high in the In Progress column (clear of the open menu, the bottom-centre toasts

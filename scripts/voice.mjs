@@ -134,14 +134,34 @@ if (force || keys.sfx !== want.sfx || !keys.padded || keys.pads !== padsKey) {
   const m = JSON.parse(readFileSync('audio_meta.json', 'utf8'));
   if (m.bgm && config.music?.volume != null) m.bgm.volume = config.music.volume;
   if (config.music?.sfxVolume != null) for (const s of m.sfx ?? []) s.volume = config.music.sfxVolume;
-  // An effect lands ON its event (the click, the orb), not at the frame start: config.sfxAt({ dur,
-  // word, marks }) → { [frame]: seconds into that frame }. word() is the padded, frame-local start.
-  if (config.sfxAt) {
+  // An effect lands ON its event (the click, the orb), not at the frame start, and ends with it:
+  // config.sfxAt({ dur, word, marks }) → { [frame]: seconds into that frame | { at, dur, vol } }.
+  // word() is the padded, frame-local start. Without a dur an effect may run 1s past its frame
+  // (a click near a cut finishes) and is then cut with a fade-out: stock effects are long loops —
+  // a 44s typing loop ran under the rest of an ad. Never past the ad's end.
+  {
     const v = (n) => m.voices.find((x) => x.frame === n);
+    const startOf = (n) => m.voices.filter((x) => x.frame < n).reduce((t, x) => t + x.duration_s, 0);
+    const adEnd = m.voices.reduce((t, x) => t + x.duration_s, 0);
     const norm = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}-]/gu, '');
     const word = (n, w) => v(n).words.find((x) => norm(x.text) === norm(w))?.start ?? 0;
-    const at = config.sfxAt({ dur: (n) => v(n).duration_s, word, marks: config.marks ?? {} });
-    for (const s of m.sfx ?? []) if (at[s.frame] != null) s.offset_s = Math.max(0, +at[s.frame].toFixed(3));
+    const at = config.sfxAt ? config.sfxAt({ dur: (n) => v(n).duration_s, word, marks: config.marks ?? {} }) : {};
+    const probe = (f) => +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f], { encoding: 'utf8' });
+    for (const s of m.sfx ?? []) {
+      const a = typeof at[s.frame] === 'object' ? at[s.frame] : { at: at[s.frame] };
+      if (a.at != null) s.offset_s = Math.max(0, +a.at.toFixed(3));
+      if (a.vol != null) s.volume = a.vol;
+      s.src ??= s.file; // the fetched original: every run re-cuts from it
+      const full = probe(s.src);
+      const room = v(s.frame).duration_s - (s.offset_s ?? 0);
+      const len = +Math.min(full, a.dur ?? room + 1, adEnd - startOf(s.frame) - (s.offset_s ?? 0)).toFixed(3);
+      if (len < full - 0.05) {
+        s.file = s.src.replace(/\.(\w+)$/, `.f${s.frame}.$1`);
+        const fade = Math.min(0.25, len / 2);
+        execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', s.src, '-t', String(len), '-af', `afade=t=out:st=${(len - fade).toFixed(3)}:d=${fade}`, s.file]);
+      } else s.file = s.src;
+      s.duration_s = Math.min(len, full);
+    }
   }
   writeFileSync('audio_meta.json', JSON.stringify(m, null, 2));
 }
