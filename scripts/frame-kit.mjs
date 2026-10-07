@@ -88,6 +88,12 @@ export function makeKit(config) {
       tl.fromTo(q(el), { scale: 1 }, { scale: 1.05, duration: 0.16, ease: 'power3.out' }, at);
       tl.to(q(el), { scale: 1, duration: 0.32, ease: 'power3.out' }, at + 0.16);
     };
+    // Pop: a word already on screen, SOLID, jumps on its cue and settles hard — the hook's word
+    // beat (lessons #38, #50: never outline/faint type waiting to fill; frame 0 shows it whole).
+    const pop = (el, at, { to = 1.22 } = {}) => {
+      tl.fromTo(q(el), { scale: 1 }, { scale: to, duration: 0.08, ease: 'power2.out', immediateRender: false }, at);
+      tl.to(q(el), { scale: 1, duration: 0.26, ease: 'back.out(3)' }, at + 0.08);
+    };
     // Kinetic type (lessons #38). Seek-safe: tweens and sets only — no callbacks, no randomness.
     // hit: a word slams in on its spoken cue — blown up and blurred, then a hard settle.
     const hit = (el, at, { from = 2.6, blur = 16 } = {}) =>

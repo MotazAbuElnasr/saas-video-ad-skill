@@ -63,8 +63,12 @@ the UI shows the script's numbers, then film **one scene per beat** from
 [references/capture.md](references/capture.md). Rules that matter most:
 - whole gestures in one take (approach → grab → drag → drop → result), never start mid-drag;
 - no camera moves in capture (`spotlight`/`focus` off) — framing happens later, and mostly doesn't;
-- after filming, **measure** event times with `bash $SKILL/scripts/cuts.sh assets/*.mp4`
-  and **look** at them with `strip.sh` — recorder marks drift by 0.5–2s;
+- **size every idle stretch to the line said over it** (≈ words ÷ 2.5 + 0.5s per sentence; a
+  measured read ÷ 2.2) — a drawer that closed mid-line cost a re-film; nothing moves under a ring
+  (scroll panes before their first paint); scrolls run on requestAnimationFrame in the page;
+- after filming, **measure** event times with `bash $SKILL/scripts/cuts.sh assets/*.mp4` (whole-
+  frame changes) and `node $SKILL/scripts/scan-marks.mjs <mp4> x y w h t0 t1` (a region: the cursor,
+  a menu, a press), and **look** with `strip.sh` — marks drift 0.5–2s, and move between takes;
 - film the **merged** product: `ad.sh film` reuses the checkout's last `dist/` build — point the
   workspace (`.origin` appRoot + the `app` link) at a worktree of origin/main, `DEMO_BUILD=1`.
 **Gate:** stills read correctly (numbers, states) and marks are measured.
@@ -84,8 +88,12 @@ voiceover (sync-durations fills them) and `music:` in the frontmatter. Stage foo
 step skipped when its inputs are unchanged. What it handles (each cost a rebuild):
 - **Voice:** `ad.config.mjs → voice: { provider, id, speed, style, saidAs }`. Paid best value:
   Gemini `Charon` — energy and pace come from `style` (speed stays 1), matched to the ad
-  (lessons #10); `saidAs` respells for TTS only (`[[/\baro\b/gi, 'arrow']]`). One line at a
-  time with the API's retry-in, cached per line, each take trimmed to 0.08s lead / 0.12s tail.
+  (lessons #10); `saidAs` respells for TTS only (`[[/\baro\b/gi, 'arrow']]`). **One performance,
+  one request:** the whole script in ONE take, cut into lines at its paragraph pauses (Whisper
+  anchors each boundary; silencedetect on stderr; < 28s transcription chunks) — per-line requests
+  gave every line its own voice and spent the shared daily cap. `voice.perLine: true` opts out.
+  `voice.mjs --recut` cuts the cached take again for free. Every take is archived by key; each
+  line is trimmed to 0.08s lead / 0.12s tail. One model per ad (lessons #49).
   Free default: Kokoro `af_heart` at 0.8 (its A-graded voice; the male voices grade C+). Kokoro
   needs a python with kokoro-onnx — `voice.mjs` reuses video-demo's venv; lines run 8 at a time.
   It fails if any SCRIPT line came back missing (the engine drops failed lines silently).
@@ -100,7 +108,8 @@ step skipped when its inputs are unchanged. What it handles (each cost a rebuild
 - **Pads:** `pads({ dur, word, marks })` — `word(n, w)` aims a lead so that word lands just
   after its event. Pads are re-applied from `NN.raw.wav`, so changing one never re-buys TTS.
 - **Listener:** `listen.mjs` (Gemini, needs a key) hears every take against its script line —
-  cached per take; the critic FAILs a mismatch ("no crash" for "no clash", a garbled brand).
+  cached per take; the critic FAILs a mismatch ("no crash" for "no clash", a garbled brand, a
+  one-take cut that put a line's first sentence in the line before → `voice.mjs --recut`).
   `regen-line.mjs <frame> <regex> [tries]` retakes one Gemini line until the listener agrees.
 - No TTS left (quota)? `recover-voice.mjs` rebuilds the timings from the wavs on disk.
 Never pass `--help` to the engine's `audio.mjs` — it isn't a help flag; it runs a full paid generation.
@@ -121,9 +130,16 @@ Never pass `--help` to the engine's `audio.mjs` — it isn't a help flag; it run
      move or hide only at a frame's `first()` word; `captionMaxChars` for a narrow text zone;
    - `boxes` in shots: rings, or `fill` + `alpha` regions; `to` ends one; `pre: true` draws it
      before the camera so it zooms with the app;
-   - `stage` in a shot (premium): the app as a floating panel in space — `{ s, from: { ry, rx, z },
-     to: {…}, bg: [c0, c1], radius, shadow }`; rounded corners, a slow 3D turn, a soft shadow, on a
-     gradient; the camera and boxes still apply inside the panel;
+   - `stage` in a shot (premium): the app as a floating panel in space — `{ s, from: { ry, rx, z,
+     cx, cy }, to: {…}, at, dur, ease, bg: [c0, c1], radius, shadow, rim }`; rounded corners, a 3D
+     turn, a soft shadow and a light rim on a gradient; the camera and boxes apply inside the panel.
+     `s` is the panel's LARGEST size in the shot and `z ≤ 1` shrinks it (z > 1 upscales: soft);
+     chain shots by matching `to` → next `from` (rescale z when s changes); `ease: 'linear'` for a
+     drift that runs across a cut; type sits in the column the panel leaves free and exits before
+     the panel crosses it (example: Plan your week);
+   - `hold` in a shot: a source time where the footage stops and its last frame holds — only over
+     an idle stretch (a still drawer, a parked cursor); a frame mid-motion reads as a freeze;
+   - `marks.ready`: the first usable source time — bake-clips warns when a shot starts earlier;
    - `sfxAt({ dur, word, marks })` → `{ frame: seconds }`.
    Transitions next to footage are always `cut` — a crossfade only fades the frame wrappers,
    the hoisted footage isn't inside them (critic FAIL `crossfade-footage`).
@@ -181,7 +197,7 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 - Subtitles on, merged to ≥ 0.6s groups, current word highlighted, hidden where on-screen type
   says the line, never over the thing being talked about (or YouTube's bottom-right Skip zone).
 - Frame 0 = the real app, undimmed, plus one banner/lockup; no parked cursor. Kinetic hooks keep it
-  composed: the headline is whole and solid at frame 0, and each word pops as it is said — never
+  composed: the headline is whole and solid at frame 0, and each word pops as it is said (`pop`) — never
   outline, faint or translucent type (lessons #50).
 - Each ad in a series gets its own look (theme of the footage, accent, entrance, card, hook
   layout, end card, bed) — similar, not the same.
@@ -212,6 +228,8 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 | `scripts/critique.mjs` / `review-sheet.sh` | the automated critic and the visual-review contact sheet |
 | `scripts/build.sh` / `render.sh` | the build pass and the verified render |
 | `scripts/cuts.sh` / `strip.sh` | measure and look at footage |
+| `scripts/scan-marks.mjs` | measure a REGION's changes (cursor, menu, drawer, a press) — re-scan after every re-film |
+| `scripts/check-split.mjs` | self-check for the one-take cutter (run after touching `gemini-voice.mjs`) |
 | `scripts/gif-preview.sh` | silent GIF preview for READMEs (GitHub won't play repo-hosted MP4s inline) |
 | `templates/` | `ad.config.mjs`, `gen-frames.mjs`, `capture.scene.ts` |
 | `references/` | `intake.md`, `script.md`, `capture.md`, `best-practices.md`, `lessons.md`, `critique.md` |
