@@ -29,11 +29,13 @@ const listen = async (f) => {
 const segs = text.split('||').map((x) => x.trim()).filter(Boolean);
 const cut = (keep) => `silenceremove=start_periods=1:start_threshold=-50dB:start_silence=${keep}`;
 const take = async (tmp) => {
-  if (segs.length === 1) return synthesizeGemini({ text, voiceId: v.id, style: v.style, wavAbs: `${process.cwd()}/${tmp}` });
+  if (segs.length === 1) return synthesizeGemini({ text, voiceId: v.id, style: v.style, ...(v.model ? { model: v.model } : {}), wavAbs: `${process.cwd()}/${tmp}` });
   const parts = [];
   for (const [k, seg] of segs.entries()) {
     const p = tmp.replace(/\.wav$/, `.s${k}.wav`);
-    const r = await synthesizeGemini({ text: seg, voiceId: v.id, style: v.style, wavAbs: `${process.cwd()}/${p}` });
+    // SEG<k>_STYLE overrides one segment's delivery: an English brand segment read with an Egyptian-
+    // Arabic style came back garbled on the Pro model
+    const r = await synthesizeGemini({ text: seg, voiceId: v.id, style: process.env[`SEG${k}_STYLE`] ?? v.style, ...(v.model ? { model: v.model } : {}), wavAbs: `${process.cwd()}/${p}` });
     if (!r.ok) return r;
     parts.push(p);
   }

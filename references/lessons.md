@@ -57,6 +57,7 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | 46 | **Cut a UI flash at a seam, and carry the ring across.** The app's hover card flashed for 0.2s as a frame opened. Cut the cursor's 0.35s approach at that seam (the camera is held) and keep the ring through the cut, so it doesn't read as a jump. | reviewer, Day overview v2/v3 |
 | 47 | **Frame out what the app gets wrong, and cover what you can't.** In the Arabic ad the agenda strip showed English times and the filter row counted the new card in every chip (both app bugs, filed). A tighter zoom kept the strip out of frame. The payoff band lands WITH the card, so the inflated counts never show. | reviewer, Ad 6 |
 | 48 | **A lineup needs measured widths, not fixed columns.** Five big words in 330px columns touched, and their guillemets merged into ✕ shapes. Use natural widths with real gaps and labels of at least 46px. Keep the pill on non-app frames too. | reviewer, Ad 6 |
+| 49 | **One voice model per ad, and keep every take.** Gemini's 2.5 Pro voice model changed the voice from line to line. A take from the Flash model next to Pro takes was audible too (Gemini as judge: "louder, more bass, closer to the mic"). The experiment also deleted the approved takes. Never switch models to dodge a quota mid-series; wait for the reset. Takes are now archived by key, so switching back is free. | "not good at all … not same voice? v6 was much better, every cut has its own voice" |
 
 ## How to work with the user (process)
 
@@ -129,3 +130,4 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | Mix at −15.9 LUFS on a YouTube ad | `render.sh` reads `destination:` from BRIEF.md; without it the mix went to the social target (−16) | always put `destination: youtube` in the BRIEF frontmatter |
 | An effect moved to another frame stayed in the old one | the sfx cache key hashed the bare `sfx:` lines, so the same line in a different frame looked unchanged | the key is per frame (`voice.mjs`) |
 | Gemini TTS 429 "retry in 13h5m14s" retried 8× in seconds | the retry parser read only the trailing seconds; it is the DAILY cap (100/day on Tier 1) | `gemini-voice.mjs` parses h/m/s and stops at once on a long wait, naming the reset; batch re-voices, or upgrade the tier |
+| Approved takes lost after a model experiment | `gemini-voice.mjs` deleted the "stale" raw take on every new synthesis | every take is archived as `.hyperframes/takes/<key>.wav` and restored when its key comes back (free) |
