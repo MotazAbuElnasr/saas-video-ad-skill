@@ -58,3 +58,20 @@ a guessed number. A payoff line ("Done.") gets a `tail` pad of 1–1.5s.
 ## Per-line delivery notes
 Add a one-line delivery note per line in `SCRIPT.md` (weary → lift; crisp brand; two beats
 then release). Speed 1.0.
+
+## Another language: write it, don't translate it
+A localized ad keeps the English ad's story, proof and numbers — and nothing of its wording.
+Write each line the way a native copywriter in that dialect would say it to a friend, then check
+it the way the audience hears it once:
+- **No word-for-word calques.** "Each on its own clock" became «وكل واحدة ليها عدّادها» and "all
+  three back on" became «التلاتة رجعوا» — the user (Egyptian) heard both as translated and AI-written:
+  «اياك تترجم ترجمة حرفية وبلاش دباجات ال AI». Native versions of the same ideas: «التلاتة شغالين،
+  وكل دقيقة محسوبة», «بيكمّلوا من مكان ما وقفت», «والباقي شغال عادي».
+- **Reach for the dialect's own idioms** for the problem and the payoff: «خبطت في معاد الخطة» (a
+  clash), «ومفيش حاجة خابطة في حاجة» (it fits), «جرّبه ببلاش» (try it free) — not the MSA or the
+  English shape of the sentence.
+- **A quote the app shows on screen is read verbatim** (it may be MSA); everything else is the dialect.
+- **On-screen type follows the same rule** — cards, headlines and the end card are copy too.
+- **Show the lines + an English gloss to a native speaker before TTS** (the user offered to review
+  the dialect). The critic flags known calques (`ai-ism`), but only a native ear catches the rest.
+

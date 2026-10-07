@@ -52,6 +52,8 @@ Draft the script per [references/script.md](references/script.md). Offer **5–7
 variants** (no comparisons to other products, no AI-isms); every number spoken must add up
 in whole numbers and match the seeded data; spell the brand for TTS ("aro dot day") and
 let captions show it as written. Present it as a table: on-screen | voice | why.
+**A localized ad is written, not translated** — same story and numbers, the dialect's own words, no
+calques or AI phrasing (script.md, "Another language"); show the lines with an English gloss first.
 **Gate:** the user approved the exact words. (TTS costs credits — never generate a draft voice.)
 
 ### 3. Capture — real footage, one clip per beat

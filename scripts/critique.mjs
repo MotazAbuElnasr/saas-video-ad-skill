@@ -30,7 +30,10 @@ if (/\b(unlike|other (apps|tools)|than (your|other)|vs\.?|instead of|most (apps|
 
 const AI_ISMS = [/seamless/i, /\bunlock/i, /streamline/i, /supercharge/i, /game[- ]?chang/i, /effortless/i, /\belevate/i,
   /revolutioni[sz]e/i, /say goodbye/i, /imagine a world/i, /in today'?s/i, /the power of/i, /\bnot at (six|6|five|5|seven|7)\b/i,
-  /,\s*not\s+(at\s+)?\w+\s*p\.?m/i, /—/];
+  /,\s*not\s+(at\s+)?\w+\s*p\.?m/i, /—/,
+  // Arabic lines translated word for word from the English ad (user: «اياك تترجم ترجمة حرفية وبلاش
+  // دباجات ال AI»): "each on its own clock", "all three back on", "start again on their own"
+  /لوحد(ه|ها|هم)/, /كل\s+(واحد|واحدة|مهمة|تايمر)\s+(ليها|ليه|ب)?\s*(عدّاد|عداد)/, /(التلاتة|الاتنين|كلهم)\s+رجعوا/];
 for (const v of voices) {
   const s = spoken(v);
   for (const re of AI_ISMS) if (re.test(s))

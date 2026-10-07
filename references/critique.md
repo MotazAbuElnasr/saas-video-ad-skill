@@ -41,6 +41,7 @@ bash $SKILL/scripts/review-sheet.sh renders/<name>.mp4          # contact sheet 
 | Does every result stay on screen long enough to read (≥1s after it appears)? | "the viewer can't see what's (Done), it's very fast cut" |
 | Does each spoken line match what is visible at that moment? | "over by an hour is not synced with the video" |
 | Does any line sound written by an AI (clever contrasts, slogans, "not at 6 p.m.")? | "this is very aish" |
+| In a localized ad: does any line or card sound translated word for word from English, or AI-written, to a native speaker? | «اياك تترجم ترجمة حرفية وبلاش دباجات ال AI» |
 | Does the maths add up when heard once? | "how 6 is free?", "6 + 4:30 is 10:30 not 9" |
 | Does the opening compare the product to others? | "don't start by comparing" |
 | Is the brand visible through the whole ad, and pronounced right? | "app logo … visible all over the video", "it said aro (silent) day" |
