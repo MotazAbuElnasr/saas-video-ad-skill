@@ -49,6 +49,10 @@ for (const v of voices) {
   const words = v.words.length - merged, talk = v.words.length ? v.words.at(-1).end - v.words[0].start : 0;
   if (talk > 0 && words / talk > 3.5)
     add('WARN', 'rushed', `frame ${v.frame}: ${(words / talk).toFixed(1)} words/s (> 3.5) — reads rushed`, '"can we try slow down the english"', 'TTS speed 1.0, or cut words');
+  // and the other way: a "measured, premium narration" style read a long line at 2.4/s — the user
+  // called the ad slow; the brisk read that fixed it ran 2.7–2.9 (short lines skip the check)
+  else if (words >= 8 && talk > 0 && words / talk < 2.6)
+    add('WARN', 'slow-read', `frame ${v.frame}: ${(words / talk).toFixed(1)} words/s (< 2.6) — reads slow`, '"it\'s slow"', 'a brisk style (lessons #62), or fewer words');
 }
 const speedM = readFileSync('SCRIPT.md', 'utf8').match(/speed[^\d]*(\d+(\.\d+)?)/i);
 if (speedM && +speedM[1] > 1.05) add('WARN', 'tts-speed', `TTS speed ${speedM[1]}`, '"slow down the english"', 'use 1.0');
@@ -163,8 +167,10 @@ if (!existsSync('compositions/captions.html')) add('WARN', 'no-subtitles', 'no c
 const last = frameIds.at(-1) && existsSync(`compositions/frames/${frameIds.at(-1)}.html`) ? readFileSync(`compositions/frames/${frameIds.at(-1)}.html`, 'utf8') : '';
 if (config.palette?.accent && new RegExp(`-bg \\{[^}]*background: ${config.palette.accent}`, 'i').test(last))
   add('WARN', 'end-card-accent', 'end card is an accent fill', '"I don\'t want blue background"', 'ink ground unless the user chose otherwise');
-if (/driving|energetic|punchy kick|upbeat/i.test(sb.match(/^music:.*$/m)?.[0] ?? ''))
-  add('WARN', 'music', 'driving music bed', '"I think ambient is better … or sound effect"', 'ambient bed + UI sfx');
+// music.upbeat: true = the user asked for energy — a calm bed under a feature ad was "very calm,
+// not okay" (Plan your week v3); the ambient default still holds for calm ads (the break ad)
+if (!config.music?.upbeat && /driving|energetic|punchy kick|upbeat/i.test(sb.match(/^music:.*$/m)?.[0] ?? ''))
+  add('WARN', 'music', 'driving music bed', '"I think ambient is better … or sound effect"', 'ambient bed + UI sfx — or music.upbeat: true when the user asked for energy');
 for (const f of frameIds) {
   const p = `compositions/frames/${f}.html`;
   if (!existsSync(p)) continue;
