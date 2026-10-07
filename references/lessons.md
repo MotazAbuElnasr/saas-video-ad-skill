@@ -128,3 +128,4 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | Gemini 2.5 models returned 404 | retired for new keys | the listener uses `gemini-3.8-flash` |
 | Mix at −15.9 LUFS on a YouTube ad | `render.sh` reads `destination:` from BRIEF.md; without it the mix went to the social target (−16) | always put `destination: youtube` in the BRIEF frontmatter |
 | An effect moved to another frame stayed in the old one | the sfx cache key hashed the bare `sfx:` lines, so the same line in a different frame looked unchanged | the key is per frame (`voice.mjs`) |
+| Gemini TTS 429 "retry in 13h5m14s" retried 8× in seconds | the retry parser read only the trailing seconds; it is the DAILY cap (100/day on Tier 1) | `gemini-voice.mjs` parses h/m/s and stops at once on a long wait, naming the reset; batch re-voices, or upgrade the tier |

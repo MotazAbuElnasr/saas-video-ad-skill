@@ -48,7 +48,13 @@ export async function geminiLines({ id, style, model, saidAs = [] }) {
       }
       const msg = String(r.error ?? '');
       if (/402|prepayment credits/i.test(msg)) throw new Error('gemini-voice: the API project is out of prepaid credits — top up at https://ai.studio/projects (Billing), then re-run');
-      const wait = /429|rate limit/i.test(msg) ? (+(msg.match(/retry in (\d+)s/i)?.[1] ?? 20) + 1) : 0;
+      // "retry in 13h5m14s" is the DAILY cap (100/day on Tier 1) — read h/m/s, and stop at once
+      // when the wait is long (it read as "14s" once and retried 8 times for nothing)
+      const m = msg.match(/retry in (?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?/i);
+      const secs = m ? (+(m[1] ?? 0)) * 3600 + (+(m[2] ?? 0)) * 60 + (+(m[3] ?? 0)) : 20;
+      if (/429|rate limit/i.test(msg) && secs > 120)
+        throw new Error(`gemini-voice: the Gemini TTS quota is used up (${msg.match(/limit: [^).]*/i)?.[0] ?? 'rate limit'}) — it resets in ${Math.round(secs / 3600)}h; upgrade the tier at https://ai.dev/rate-limit or re-run later`);
+      const wait = /429|rate limit/i.test(msg) ? Math.ceil(secs) + 1 : 0;
       if (!wait || attempt >= 8) throw new Error(`gemini-voice: line ${frame} failed — ${msg.slice(0, 300)}`);
       console.log(`  voice ${frame}: rate-limited, waiting ${wait}s`);
       await sleep(wait * 1000);
