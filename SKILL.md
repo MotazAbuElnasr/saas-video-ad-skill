@@ -119,6 +119,9 @@ Never pass `--help` to the engine's `audio.mjs` — it isn't a help flag; it run
      move or hide only at a frame's `first()` word; `captionMaxChars` for a narrow text zone;
    - `boxes` in shots: rings, or `fill` + `alpha` regions; `to` ends one; `pre: true` draws it
      before the camera so it zooms with the app;
+   - `stage` in a shot (premium): the app as a floating panel in space — `{ s, from: { ry, rx, z },
+     to: {…}, bg: [c0, c1], radius, shadow }`; rounded corners, a slow 3D turn, a soft shadow, on a
+     gradient; the camera and boxes still apply inside the panel;
    - `sfxAt({ dur, word, marks })` → `{ frame: seconds }`.
    Transitions next to footage are always `cut` — a crossfade only fades the frame wrappers,
    the hoisted footage isn't inside them (critic FAIL `crossfade-footage`).

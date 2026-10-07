@@ -55,6 +55,8 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | 44 | **Whole durations, in every language.** «نص ساعة» (half an hour) became «لمدة ساعة». The critic now catches Arabic halves. | "without halfs to make it simple" |
 | 45 | **Film the merged product.** The film step reuses the last `dist/` build in the checkout. A dedicated worktree at origin/main (`DEMO_BUILD=1`) picked up the localized Arabic chips that the stale build showed in English. | Ad 6 |
 | 46 | **Cut a UI flash at a seam, and carry the ring across.** The app's hover card flashed for 0.2s as a frame opened. Cut the cursor's 0.35s approach at that seam (the camera is held) and keep the ring through the cut, so it doesn't read as a jump. | reviewer, Day overview v2/v3 |
+| 47 | **Frame out what the app gets wrong, and cover what you can't.** In the Arabic ad the agenda strip showed English times and the filter row counted the new card in every chip (both app bugs, filed). A tighter zoom kept the strip out of frame. The payoff band lands WITH the card, so the inflated counts never show. | reviewer, Ad 6 |
+| 48 | **A lineup needs measured widths, not fixed columns.** Five big words in 330px columns touched, and their guillemets merged into ✕ shapes. Use natural widths with real gaps and labels of at least 46px. Keep the pill on non-app frames too. | reviewer, Ad 6 |
 
 ## How to work with the user (process)
 
@@ -124,3 +126,5 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | `content_overlap` on a faint/filled kinetic headline | the faint copy and the words that light up over it overlap by design | `data-layout-allow-overlap` on both layers and their spans |
 | Whisper couldn't verify an English brand inside Arabic | its Arabic model spells it in Arabic letters; its English model hallucinates | the Gemini listener (`listen.mjs`) |
 | Gemini 2.5 models returned 404 | retired for new keys | the listener uses `gemini-3.8-flash` |
+| Mix at −15.9 LUFS on a YouTube ad | `render.sh` reads `destination:` from BRIEF.md; without it the mix went to the social target (−16) | always put `destination: youtube` in the BRIEF frontmatter |
+| An effect moved to another frame stayed in the old one | the sfx cache key hashed the bare `sfx:` lines, so the same line in a different frame looked unchanged | the key is per frame (`voice.mjs`) |

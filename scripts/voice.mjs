@@ -52,7 +52,8 @@ const spoken = readFileSync('SCRIPT.md', 'utf8').split('\n').filter((l) => /^ {4
 const want = {
   tts: hash(`${spoken}|${v.provider}|${v.id}|${v.speed}|${v.style ?? ''}|${v.model ?? ''}|${v.saidAs ?? ''}`),
   bgm: hash(sb.match(/^music:.*$/m)?.[0] ?? ''),
-  sfx: hash([...sb.matchAll(/^- sfx:.*$/gm)].map((m) => m[0]).join('\n')),
+  // per frame: moving the same effect to another frame must re-fetch (the bare lines hashed the same)
+  sfx: hash(sb.split(/^## /m).map((blk) => `${blk.match(/^Frame (\d+)/)?.[1] ?? ''}:${blk.match(/^- sfx:.*$/m)?.[0] ?? ''}`).join('\n')),
 };
 const run = (label, args) => {
   const t0 = Date.now();
