@@ -29,6 +29,18 @@ through its web editor. A 24s ad for
 [aro.day](https://aro.day)'s day-capacity meter. Every frame of the product is the real app.
 How it was made, and the six rounds of notes that shaped it: [examples/aroday-it-fits](examples/aroday-it-fits).
 
+### A series: similar, not the same
+
+Each ad of a series gets its own look — the app theme it's filmed in, the accent, the type
+entrance, the card style, the hook layout, the end card, the bed — while the brand system
+(logo, type, real UI, CTA, subtitles) stays put:
+
+| Ad | Look | Watch |
+|---|---|---|
+| It fits | pearl theme, blue, slam type, ink cards, ink end card, ambient bed | [MP4](examples/aroday-it-fits/aroday-it-fits.mp4) |
+| Take a break | pearl theme, amber from the app's breathing orb, rise type, paper cards, orb end card, birdsong | [MP4](examples/aroday-take-a-break/aroday-take-a-break.mp4) |
+| Schedule for me | terminal theme, phosphor green, typewriter type, outline cards, a zoom on the proof, rain | [MP4](examples/aroday-schedule-for-me/aroday-schedule-for-me.mp4) |
+
 ## How it works
 
 ```
@@ -74,8 +86,9 @@ A full rebuild of the example takes about 30s of machine time (render ≈ 22s).
 - Node ≥ 22, ffmpeg
 - [video-demo](https://github.com/nilbuild/video-demo) skill: `npx skills add nilbuild/video-demo`
 - HyperFrames CLI + skills: `npx hyperframes skills update product-launch-video`
-- Optional: a HeyGen account (`npx hyperframes auth login`) for better voices and a music
-  library. Without it, voice and music use local engines (Kokoro / MusicGen).
+- Voices are free by default: Kokoro (local) `af_heart`, its top-graded voice. A HeyGen
+  account (`npx hyperframes auth login`) adds more voices and a music/SFX library; its free
+  voice time runs out monthly.
 
 ## Install
 
@@ -107,6 +120,7 @@ approval before it films or buys any TTS.
 | [`scripts/`](scripts) | `ad.sh` (one command per stage), timing, shot baking, cached voice, voice pads, caption merge, frame kit, critic, build / render / measure |
 | [`templates/`](templates) | `ad.config.mjs`, `gen-frames.mjs`, `capture.scene.ts` |
 | [`examples/aroday-it-fits/`](examples/aroday-it-fits) | a complete ad: config, frames, storyboard, script, capture scenes, the MP4 |
+| [`examples/aroday-take-a-break/`](examples/aroday-take-a-break), [`examples/aroday-schedule-for-me/`](examples/aroday-schedule-for-me) | two more looks of the series, each after a fresh-eyes review round |
 
 ## Lessons baked in
 

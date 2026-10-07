@@ -73,23 +73,38 @@ onto muted text, and dark ink onto a blue fill — fix in `frame.md`). Write `ST
 `sfx:` per frame and `music:` in the frontmatter. Stage footage + fonts into `assets/`.
 **Gate:** storyboard approved (optionally after a `storyboard.html` sketch sheet).
 
-### 5. Audio — order is load-bearing
-```bash
-P=~/.claude/skills/product-launch-video/scripts
-node $P/audio.mjs --script ./SCRIPT.md --storyboard ./STORYBOARD.md --hyperframes . \
-  --out ./audio_meta.json --provider heygen --voice <id> --speed 1.0 --only tts
-node $P/audio.mjs ... --only bgm                      # if the music mood changed
-node $P/audio.mjs fetch-sfx --storyboard ./STORYBOARD.md --hyperframes .
-node $SKILL/scripts/pad-voices.mjs                    # AFTER fetch-sfx (it rewrites audio_meta)
-node $P/audio.mjs sync-durations --audio-meta ./audio_meta.json --storyboard ./STORYBOARD.md
-```
-Never pass `--help` to `audio.mjs` — it isn't a help flag; it runs a full paid generation.
-If `fetch-sfx` ran after padding, restore with `pad-voices.mjs --meta-only`.
+### 5. Audio — one cached command
+`bash $SKILL/scripts/ad.sh voice` (`voice.mjs`): TTS → bed → SFX → pads → mix → durations, each
+step skipped when its inputs are unchanged. What it handles (each cost a rebuild):
+- **Voice:** `ad.config.mjs → voice: { provider, id, speed }`. Free default: Kokoro `af_heart`
+  at 0.8 (its A-graded voice; the male voices grade C+). Kokoro needs a python with
+  kokoro-onnx — `voice.mjs` reuses video-demo's venv; lines run 8 at a time (~30s for 8 lines).
+  It fails if any SCRIPT line came back missing (the engine drops failed lines silently).
+- **Words:** Whisper timings mapped onto the SCRIPT's words (`align-words.mjs`) — captions and
+  `cue()` never see "Arrow" for "aro" or "25" for "twenty-five".
+- **Bed:** retrieved only when `music:` changes, mixed at `music.volume` (≈0.2–0.3). For
+  "natural sounds" ask for a *field recording* and look at its spectrogram before using it —
+  steady horizontal bands are notes (a "natural ambience" query returned a pad chord).
+- **SFX:** one per event, placed ON the event with `sfxAt()`; no impact/riser in calm ads.
+- **Pads:** `pads({ dur, word, marks })` — `word(n, w)` aims a lead so that word lands just
+  after its event. Pads are re-applied from `NN.raw.wav`, so changing one never re-buys TTS.
+- No TTS left (quota)? `recover-voice.mjs` rebuilds the timings from the wavs on disk.
+Never pass `--help` to the engine's `audio.mjs` — it isn't a help flag; it runs a full paid generation.
 
 ### 6. Build — config, frames, one script
 1. Copy [templates/ad.config.mjs](templates/ad.config.mjs) → `<project>/ad.config.mjs`:
    brand, palette, fonts, measured `marks`, `shots()` (full-screen 1:1 by default),
-   `pads()`, `captionMerge`.
+   `pads()`, `captionMerge`. The knobs that make a series "similar but not the same":
+   - `look: { entrance: 'slam'|'rise'|'type'|'wipe', card: 'ink'|'paper'|'outline'|'clear', bug: { left|right, top } }`
+     — use `enter(el, at)` in frames; the corner logo is an ink pill placed clear of the app's controls;
+   - `palette.captionAccent` / `captionInk` — subtitle highlight + box per ad;
+   - `captionMoves({ dur, cue, first })` → `{ from, to, x, y }` / `{ from, to, hide: true }`;
+     move or hide only at a frame's `first()` word; `captionMaxChars` for a narrow text zone;
+   - `boxes` in shots: rings, or `fill` + `alpha` regions; `to` ends one; `pre: true` draws it
+     before the camera so it zooms with the app;
+   - `sfxAt({ dur, word, marks })` → `{ frame: seconds }`.
+   Transitions next to footage are always `cut` — a crossfade only fades the frame wrappers,
+   the hoisted footage isn't inside them (critic FAIL `crossfade-footage`).
 2. Copy [templates/gen-frames.mjs](templates/gen-frames.mjs) → `<project>/.hyperframes/gen-frames.mjs`
    and write one block per frame using `makeKit(config)` — hook (composed at frame 0),
    footage frames (transparent + overlay `card`s over EMPTY regions of the app), end card.
@@ -103,16 +118,19 @@ If `fetch-sfx` ran after padding, restore with `pad-voices.mjs --meta-only`.
 
 ### 6½. Critique — before the user sees it
 `node $SKILL/scripts/critique.mjs --render renders/<name>.mp4` (automated; every FAIL blocks)
-and `bash $SKILL/scripts/review-sheet.sh renders/<name>.mp4`. Then dispatch one fresh-eyes
-reviewer sub-agent with the prompt in [references/critique.md](references/critique.md): the
-sheet, the tile-time map, the transcript and the rubric. It writes timestamped notes in the
-user's voice. Fix them, rebuild, and re-run. At most two loops, then show the user what is
-still open.
+and `bash $SKILL/scripts/review-sheet.sh renders/<name>.mp4`. Then **always** dispatch one
+fresh-eyes reviewer sub-agent (prompt in [references/critique.md](references/critique.md)):
+frames every 0.5s + around every cut, a transcript, the user's standing notes. On the aro.day
+ads it caught what no rule did — three text layers saying the same words, 2s of dead air, a
+blank board before the end card, a claim the app's own padding contradicted. Fix, rebuild,
+re-run; at most two loops, then show the user what is still open. **After every ad, add its
+lessons to `references/lessons.md` and push the skill** (user).
 
 ### 7. Render — verify the MP4 itself
-`bash $SKILL/scripts/render.sh renders/<name>.mp4` — renders, asserts the engine's
-`videoCount` equals the footage clips, checks audio, writes `-thumbnail.png` (frame 0) and
-`-strip.png`. **Read the strip before sending.** A clean build/snapshot is not proof — one
+`bash $SKILL/scripts/render.sh renders/<name>.mp4` — renders at 8 Mbps with PNG frame
+extraction (small UI text survives YouTube's re-encode), asserts the engine's `videoCount`
+equals the footage clips, normalises loudness to the destination (YouTube −14 LUFS) and fades
+the mix with the picture, writes `-thumbnail.png` (frame 0) and `-strip.png`. **Read the strip before sending.** A clean build/snapshot is not proof — one
 render shipped with zero footage.
 
 ### 8. Iterate
@@ -129,15 +147,21 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
   reason, to make something small readable while nothing moves there: one eased move, hold,
   then out before the next action. **Never during a gesture** (the critic FAILs it).
 - Hook over **live** footage (research: open mid-action), value proposition by 3s.
-- **Brand said by 5s**, with the `hero` logo lockup on the hook frame (`base(..., { bug: 'hero' })`).
+- **Brand said by 5s**, with a hero lockup on the hook frame (`bug: 'hero'`, or your own
+  lockup marked `data-brand="hero"`), and the logo pill on every footage frame after it.
 - Voice ≈ 150 wpm (≈ 75 words per 30s). Cards ≤ 42 chars per line, held ≥ chars ÷ 18 s.
-- End card: brand, promise, and the URL / CTA on screen. A spoken CTA is the user's call (intake).
+- End card: brand, promise, and the CTA **shown and said** ("Start free at <brand>") — the
+  user asked for the research's version; the pill appears as it's said; ≥ 1.5s hold.
 - Text = overlay cards on empty regions; big kinetic type only on non-footage frames.
-- Voice at **speed 1.0**; one idea per line; ~2–4s per footage beat; 1–1.5s hold after the payoff.
-- **Ambient** bed + 4–6 UI SFX on events (drop, warning, state flip, done, logo).
-- Subtitles on, 2–3 words per group, current word highlighted.
-- Frame 0 fully composed (it is the thumbnail). Brand corner bug on non-app frames only.
-- End card on the ink/neutral ground unless the user picks an accent fill.
+- Free voice (Kokoro `af_heart`, 0.8) unless the user has a paid one; one idea per line, split
+  at its event; ~2–4s per footage beat; 1–1.5s hold after the payoff; no 2s silences.
+- Bed: a quiet field recording or ambient texture (≈0.2–0.3) + a few SFX on events.
+- Subtitles on, merged to ≥ 0.6s groups, current word highlighted, hidden where on-screen type
+  says the line, never over the thing being talked about (or YouTube's bottom-right Skip zone).
+- Frame 0 = the real app, undimmed, plus one banner/lockup; no parked cursor.
+- Each ad in a series gets its own look (theme of the footage, accent, entrance, card, hook
+  layout, end card, bed) — similar, not the same.
+- End card on a neutral/dark ground (never the brand blue) unless the user picks a fill.
 
 ## Roadmap (not built yet — say so if asked)
 - 9:16 and 1:1 cut-downs: a static crop per beat around the action, inside the platform safe
@@ -150,9 +174,12 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 |---|---|
 | `scripts/timing.mjs` | durations + word cues from `audio_meta.json`, loads `ad.config.mjs` |
 | `scripts/bake-clips.mjs` | footage → `assets/shot-<frame>.mp4` (range, framing, eased moves, rings) |
-| `scripts/pad-voices.mjs` | lead/tail silence so the voice serves the footage |
+| `scripts/pad-voices.mjs` | normalise voices (raw audio, script-aligned words), then lead/tail pads |
+| `scripts/align-words.mjs` | heard (Whisper) timings → the SCRIPT's words |
+| `scripts/recover-voice.mjs` | rebuild voice timings from wavs on disk (no TTS) |
+| `scripts/caption-moves.mjs` | subtitles: merge short groups, move/hide between groups, per-ad tint |
 | `scripts/caption-meta.mjs` | spoken spelling → written brand in subtitles |
-| `scripts/frame-kit.mjs` | `makeKit(config)` → `base`, `footage`, `card`, `OVER` for frame files |
+| `scripts/frame-kit.mjs` | `makeKit(config)` → `base`, `footage`, `card`, `OVER`, `enter` (per-ad look) |
 | `scripts/post-assemble.mjs` | lifts frames above hoisted footage so overlays show |
 | `scripts/ad.sh` | one command per stage: `new`, `film`, `voice`, `build`, `render`, `critique`, `all` |
 | `scripts/voice.mjs` | cached TTS → BGM → SFX → pads → durations |
@@ -163,3 +190,4 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 | `templates/` | `ad.config.mjs`, `gen-frames.mjs`, `capture.scene.ts` |
 | `references/` | `intake.md`, `script.md`, `capture.md`, `best-practices.md`, `lessons.md`, `critique.md` |
 | `examples/aroday-it-fits/` | the full aro.day ad: config, frames, storyboard, script, capture scenes, the MP4 |
+| `examples/aroday-take-a-break/`, `examples/aroday-schedule-for-me/` | two more looks of the series (calm amber; terminal) |

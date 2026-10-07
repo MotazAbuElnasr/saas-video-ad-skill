@@ -58,7 +58,7 @@ if (!(brandAt !== null && brandAt <= 5.0))
   add('WARN', 'brand-late', `brand first said at ${brandAt?.toFixed(1) ?? 'never'}s (ABCD: say it by 5s, with the logo on screen)`, 'research: ABCD Branding', 'name the product in line 1 or 2');
 const hookHtml = existsSync(`compositions/frames/${frameIds[0]}.html`) ? readFileSync(`compositions/frames/${frameIds[0]}.html`, 'utf8') : '';
 if (!hookHasBug) add('WARN', 'logo-missing', 'no logo in the hook frame', '"we need app logo visible all over the video"', 'base(..., { bug: "hero" })');
-else if (!hookHtml.includes('f-bug hero')) add('WARN', 'logo-small', 'hook logo is the small corner bug (~0.4% of frame) — hard to read on a phone', 'research: logo readable within 5s (ABCD detector uses 3.5%)', 'base(..., { bug: "hero" }) on the hook frame');
+else if (!hookHtml.includes('f-bug hero') && !hookHtml.includes('data-brand="hero"')) add('WARN', 'logo-small', 'hook logo is the small corner bug (~0.4% of frame) — hard to read on a phone', 'research: logo readable within 5s (ABCD detector uses 3.5%)', 'base(..., { bug: "hero" }) on the hook frame');
 const allWords = voices.reduce((n, v) => n + v.words.length, 0);
 if (allWords / total * 30 > 80) add('WARN', 'words-per-30s', `${Math.round(allWords / total * 30)} words per 30s (target ≈ 75 — about 150 wpm)`, 'research: VO pace', 'cut words, not speed');
 const endWords = voices.at(-1) ? spoken(voices.at(-1)).toLowerCase() : '';
@@ -70,10 +70,10 @@ const fp = voices.filter((v) => footageIds.has(frameIds[v.frame - 1]));
 for (const v of voices) {
   const id = frameIds[v.frame - 1] ?? `frame ${v.frame}`;
   const tail = v.duration_s - (v.words.at(-1)?.end ?? 0);
-  if (footageIds.has(id) && v.duration_s < 2.0)
-    add('WARN', 'beat-too-short', `${id}: ${v.duration_s.toFixed(2)}s of footage — too fast to follow`, '"very fast cut"', 'lengthen the line or pad a tail');
-  if (v.frame < voices.length && tail < 0.12)
-    add('WARN', 'no-breath', `${id}: line ends ${tail.toFixed(2)}s before the cut`, 'cuts on the last syllable feel abrupt', 'small tail pad');
+  // the breath between two lines = this line's tail + the next line's lead
+  const breath = tail + (voices.find((x) => x.frame === v.frame + 1)?.words[0]?.start ?? 0);
+  if (v.frame < voices.length && breath < 0.12)
+    add('WARN', 'no-breath', `${id}: line ends ${breath.toFixed(2)}s before the next one`, 'cuts on the last syllable feel abrupt', 'small tail pad');
 }
 const lastFootage = fp.at(-1);
 if (lastFootage) {
@@ -96,6 +96,28 @@ if (voices[0] && voices[0].duration_s > 4.0) add('WARN', 'slow-hook', `hook fram
 const shots = config.shots ? config.shots({ dur: (n) => voices.find((x) => x.frame === n)?.duration_s ?? 1,
   cue: () => 0, marks: config.marks ?? {}, full: (src, from, dur, e = {}) => ({ src, from, dur, W: 1920, H: 1080, cam0: { s: 1 }, moves: [], ...e }), config }) : {};
 const list = Object.entries(shots);
+// Transitions next to footage must be cuts: a crossfade only fades the frame wrappers — the
+// hoisted footage isn't inside them and stops at its own duration (blank board, "muddy dissolve").
+{
+  const sb = existsSync('STORYBOARD.md') ? readFileSync('STORYBOARD.md', 'utf8') : '';
+  const trans = [...sb.matchAll(/^## Frame (\d+)[\s\S]*?^- transition_in:\s*(.+)$/gm)].map((m) => ({ n: +m[1], t: m[2].trim() }));
+  for (const { n, t } of trans) {
+    if (/^(cut|none|)$/i.test(t)) continue;
+    const here = frameIds[n - 1], before = frameIds[n - 2];
+    if ((here && footageIds.has(here)) || (before && footageIds.has(before)))
+      add('FAIL', 'crossfade-footage', `frame ${n} uses "${t}" next to footage`, 'reviewer: "a muddy grey dissolve", the board vanished 0.4s early', 'transition_in: cut');
+  }
+}
+// A beat is one continuous take: frames joined by an invisible seam read as ONE shot, so only a
+// whole beat can be "too fast to follow".
+const beats = [];
+for (const [id, s] of list) {
+  const b = beats.at(-1);
+  if (b && b.src === s.src && Math.abs(b.end - s.from) < 0.02) { b.ids.push(id); b.dur += s.dur; b.end = s.from + s.dur; }
+  else beats.push({ src: s.src, ids: [id], dur: s.dur, end: s.from + s.dur });
+}
+for (const b of beats) if (b.dur < 2.0)
+  add('WARN', 'beat-too-short', `${b.ids.join(' + ')}: ${b.dur.toFixed(2)}s of footage — too fast to follow`, '"very fast cut"', 'lengthen the line or pad a tail');
 for (const [id, s] of list) {
   const fit = Math.min(s.W / 1920, s.H / 1080);
   const maxS = Math.max(s.cam0?.s ?? fit, ...(s.moves ?? []).map((mv) => mv.to.s));
@@ -115,9 +137,10 @@ for (const g of config.gestures ?? []) {
     const end = s.from + s.dur;
     const startsInside = s.from > g.from + 0.05 && s.from < g.to - 0.05;
     const endsInside = end > g.from + 0.05 && end < g.to - 0.05;
-    const next = list[i + 1]?.[1];
+    const next = list[i + 1]?.[1], prev = list[i - 1]?.[1];
     const continues = next && next.src === s.src && Math.abs(next.from - end) < 0.02; // invisible seam
-    if (startsInside) add('FAIL', 'cut-mid-gesture', `${id} starts inside "${g.name}" (${g.from}–${g.to}s)`, '"the video cut while dragging is disturbing"', 'start before the approach');
+    const seamIn = prev && prev.src === s.src && Math.abs(prev.from + prev.dur - s.from) < 0.02;
+    if (startsInside && !seamIn) add('FAIL', 'cut-mid-gesture', `${id} starts inside "${g.name}" (${g.from}–${g.to}s)`, '"the video cut while dragging is disturbing"', 'start before the approach');
     if (endsInside && !continues) add('FAIL', 'cut-mid-gesture', `${id} ends inside "${g.name}"`, '"the video cut while dragging"', 'extend the shot or continue the take');
   }
 }

@@ -29,6 +29,13 @@ function expr(shot, key) {
 }
 
 const hex = (c) => `0x${(c ?? '#2563eb').replace('#', '')}`;
+// One highlight box: a ring (t px), or a fill (`fill: true`, `alpha` 0–1) — e.g. shading the
+// part of a timeline the claim excludes. `to` switches it off again.
+const box = (b) => {
+  const on = b.to != null ? `between(n,${Math.round(b.from * 60)},${Math.round(b.to * 60)})` : `gte(n,${Math.round(b.from * 60)})`;
+  const color = `${hex(b.color ?? config.palette?.accent)}${b.alpha != null ? `@${b.alpha}` : ''}`;
+  return `drawbox=x=${b.x}:y=${b.y}:w=${b.w}:h=${b.h}:color=${color}:t=${b.fill ? 'fill' : (b.t ?? 5)}:enable='${on}'`;
+};
 const UP = 2; // upscale before zoompan so moves are sub-pixel smooth
 
 const shots = config.shots({ ...kit, full });
@@ -53,15 +60,18 @@ const jobs = Object.entries(shots).map(([id, shot]) => {
   const vf = [
     'fps=60',
     'tpad=stop_mode=clone:stop_duration=3', // a slower read may outlast the recorded clip
+    // `pre` boxes are drawn on the source, before the camera: they zoom WITH the app (a ring or
+    // a shaded region inside a shot that zooms). Times are source-frame based (60 fps capture).
+    ...(shot.boxes ?? []).filter((b) => b.pre).map(box),
     // Full-screen 1:1 shots skip the zoompan path entirely (3–4× faster).
     ...(still ? [] : [
       `pad=${pw}:${ph}:${ox}:${oy}:color=${hex(config.palette?.canvas ?? '#fafbfc')}`,
       `scale=${pw * UP}:${ph * UP}:flags=lanczos`,
       `zoompan=z='${pw}*(${S})/${shot.W}':x='${UP}*((${FX})+${ox}-(${TX})/(${S}))':y='${UP}*((${FY})+${oy}-(${TY})/(${S}))':d=1:s=${shot.W}x${shot.H}:fps=60`,
     ]),
-    // Highlight boxes switch on by frame number (t is unreliable after zoompan).
-    ...(shot.boxes ?? []).map((b) =>
-      `drawbox=x=${b.x}:y=${b.y}:w=${b.w}:h=${b.h}:color=${hex(b.color ?? config.palette?.accent)}:t=${b.t ?? 5}:enable='gte(n,${Math.round(b.from * 60)})'`),
+    // Highlight boxes switch on (and, with `to`, off) by frame number (t is unreliable after
+    // zoompan). `to`: the thing ringed disappears mid-shot (a chip that closes with its input).
+    ...(shot.boxes ?? []).filter((b) => !b.pre).map(box),
     'format=yuv420p',
   ].join(',');
   return new Promise((ok, fail) => {

@@ -12,6 +12,7 @@ node .hyperframes/gen-frames.mjs
 if [[ " $* " != *" --no-captions "* ]]; then
   node "$SKILL/scripts/caption-meta.mjs"
   node "$PLV/captions.mjs" build --storyboard ./STORYBOARD.md --audio-meta ./audio_meta.captions.json --hyperframes . --out ./caption_groups.json | tail -1
+  node "$SKILL/scripts/caption-moves.mjs"   # keep subtitles off the app UI they'd cover (config.captionMoves)
 else
   rm -f compositions/captions.html
 fi
