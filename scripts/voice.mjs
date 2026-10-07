@@ -120,7 +120,9 @@ if ((needTts && !geminiDone) || needBgm) {
   keys.bgm = want.bgm; delete keys.sfx; save();
 } else console.log('  tts + bgm: cached');
 
-const padsKey = hash(String(config.pads ?? ''));
+// the whole config, not the pads() source: a lead reads marks and constants outside the function —
+// moving a frame's anchor (T3) re-used the old leads, and a word landed before its event. Pads are free.
+const padsKey = hash(readFileSync('ad.config.mjs', 'utf8'));
 if (force || keys.sfx !== want.sfx || !keys.padded || keys.pads !== padsKey) {
   if (keys.sfx !== want.sfx || force) {
     // fetch-sfx rebuilds voices from the engine sidecar — empty after recover-voice once wiped
