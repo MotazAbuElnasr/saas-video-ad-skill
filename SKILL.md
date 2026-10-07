@@ -101,6 +101,8 @@ Never pass `--help` to the engine's `audio.mjs` — it isn't a help flag; it run
    `pads()`, `captionMerge`. The knobs that make a series "similar but not the same":
    - `look: { entrance: 'slam'|'rise'|'type'|'wipe', card: 'ink'|'paper'|'outline'|'clear', bug: { left|right, top } }`
      — use `enter(el, at)` in frames; the corner logo is an ink pill placed clear of the app's controls;
+   - kinetic type for hooks and payoffs (lessons #38): `hit(el, at, { from, blur })` slams a word in
+     on its spoken cue, `shake(group, at, amp)`, `glitch(el, at)`, `flash(at, alpha)` — all seek-safe;
    - `palette.captionAccent` / `captionInk` — subtitle highlight + box per ad;
    - `captionMoves({ dur, cue, first })` → `{ from, to, x, y }` / `{ from, to, hide: true }`;
      move or hide only at a frame's `first()` word; `captionMaxChars` for a narrow text zone;
@@ -162,7 +164,8 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 - Bed: a quiet field recording or ambient texture (≈0.2–0.3) + a few SFX on events.
 - Subtitles on, merged to ≥ 0.6s groups, current word highlighted, hidden where on-screen type
   says the line, never over the thing being talked about (or YouTube's bottom-right Skip zone).
-- Frame 0 = the real app, undimmed, plus one banner/lockup; no parked cursor.
+- Frame 0 = the real app, undimmed, plus one banner/lockup; no parked cursor. Kinetic hooks keep it
+  composed: the headline waits in outline and fills word by word as it is said.
 - Each ad in a series gets its own look (theme of the footage, accent, entrance, card, hook
   layout, end card, bed) — similar, not the same.
 - End card on a neutral/dark ground (never the brand blue) unless the user picks a fill.

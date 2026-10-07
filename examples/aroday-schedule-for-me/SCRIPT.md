@@ -1,7 +1,7 @@
 # SCRIPT — aroday-schedule-for-me
 
-**Voice:** Heart (Kokoro af_heart, local, free) — top-graded Kokoro voice (A).
-**Voice settings:** speed 0.8
+**Voice:** Charon (Gemini TTS, gemini-3.8-flash-tts) — the user's pick after listening.
+**Voice settings:** style prompt: "Confident and light, a little playful. A short product ad voice-over; natural and quick, not an announcer."
 **Voice direction:** Confident, quick, a little playful — a feature that does the work for you.
 Spoken brand is written "aro dot day" (TTS drops the dot otherwise).
 

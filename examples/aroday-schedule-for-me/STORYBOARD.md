@@ -22,7 +22,7 @@ music: gentle rain ambience, soft steady rainfall, natural sound only, no music
 
 - scene: The still day; off-hours shaded; the empty 17:00–18:00 slot glowing; in the In Progress column: aro.day lockup, kicker "somewhere in your workday", headline "one free hour." Subtitles hidden.
 - voiceover: "Somewhere in your workday, there's one free hour."
-- duration: 3.179s
+- duration: 3.85s
 - transition_in: cut
 - status: animated
 - src: compositions/frames/01-one-free-hour.html
@@ -31,7 +31,7 @@ music: gentle rain ambience, soft steady rainfall, natural sound only, no music
 
 - scene: The slot keeps glowing; the cursor appears and opens the new-task input.
 - voiceover: "aro dot day finds it for you."
-- duration: 2.447s
+- duration: 1.832s
 - transition_in: cut
 - status: animated
 - src: compositions/frames/02-finds-it.html
@@ -40,7 +40,7 @@ music: gentle rain ambience, soft steady rainfall, natural sound only, no music
 
 - scene: Typing "Prepare investor update 1h"; ring on the parsed ⧗ 1h chip until Enter; the card appears.
 - voiceover: "Type the task, and how long it takes."
-- duration: 2.71s
+- duration: 2.419s
 - transition_in: cut
 - status: animated
 - src: compositions/frames/03-type-it.html
@@ -50,7 +50,7 @@ music: gentle rain ambience, soft steady rainfall, natural sound only, no music
 
 - scene: ⋯ opens the card menu on "menu"; ring on "Schedule for me · Today 05:00 PM" until the click on "me".
 - voiceover: "From its menu: Schedule for me."
-- duration: 2.56s
+- duration: 2.623s
 - transition_in: cut
 - status: animated
 - src: compositions/frames/04-schedule-for-me.html
@@ -60,7 +60,7 @@ music: gentle rain ambience, soft steady rainfall, natural sound only, no music
 
 - scene: The task lands at 17:00; eased zoom into the timeline (the slot ring and shading zoom with it); outline card typed in voice order: "5:00 PM" then "the one free hour — booked."; hold. Subtitles hidden.
 - voiceover: "Five p.m. The one free hour, booked."
-- duration: 4.564s
+- duration: 4.696s
 - transition_in: cut
 - status: animated
 - src: compositions/frames/05-booked.html
@@ -70,7 +70,7 @@ music: gentle rain ambience, soft steady rainfall, natural sound only, no music
 
 - scene: Near-black end card: mark + aro.day, typed tagline "type it. it finds the time." with a blinking block cursor, green CTA pill "Start free at aro.day" as it is said; hold. Subtitles hidden.
 - voiceover: "Start free at aro dot day."
-- duration: 4.955s
+- duration: 4.951s
 - transition_in: cut
 - status: animated
 - src: compositions/frames/06-brand.html

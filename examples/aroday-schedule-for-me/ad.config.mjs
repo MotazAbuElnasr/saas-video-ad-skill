@@ -9,8 +9,9 @@ const ZOOM = { fx: 1658, fy: 166, s: 1.8, tx: 1460, ty: 290 }; // payoff: the 17
 
 export default {
   brand: { name: 'aro.day', mark: 'assets/aroday-mark.svg' },
-  // Free voices only (user). Kokoro af_heart — its top-graded voice (A). 0.8: unhurried.
-  voice: { provider: 'kokoro', id: 'af_heart', speed: 0.8 },
+  // Gemini Charon (user's pick, after listening; reviews: the top narration voice). Pacing
+  // is a style prompt (speed stays 1); the key comes from the keychain (gemini-api-key).
+  voice: { provider: 'gemini', id: 'Charon', style: 'Confident, friendly and welcoming product-ad read, lightly upbeat with a smile. Natural, brisk pace with short pauses, never slow, never hyped or shouty. Lift on the brand name; say the call to action with a smile. A little playful.', saidAs: [[/\baro\b/gi, 'arrow']] },
   music: { volume: 0.2, sfxVolume: 0.25 }, // rule 16: less music
   look: { entrance: 'type', card: 'outline', bug: { left: 26, top: 994 } }, // pill bottom-left: the rail is empty there (top-right is the timeline)
   // From the app's terminal theme (public/styles/themes.css): bg #0a0b0a, accent #5ef07a.
@@ -78,7 +79,7 @@ export default {
     const t5 = t4 + lead4 + dur(4);
     const lead5 = Math.max(0, marks.booked + 0.15 - t5 - word(5, 'five'));    // "Five" after it lands
     return [
-      { frame: 1, tail: 0.15 },
+      { frame: 1, tail: 0.55 },   // the inverted "hour." holds a beat (hook < 4s)
       { frame: 2, tail: 0.1 },
       { frame: 3, tail: tail3 },
       { frame: 4, lead: lead4 },

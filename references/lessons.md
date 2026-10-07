@@ -46,7 +46,7 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | 35 | **Say the UI word as it happens.** "Open its menu… and hit Schedule for me" ran 1–2s ahead while the cursor idled. "From its menu:" lands as the menu opens; "Schedule for me" as the cursor reaches it; cut the take's idle time at the source (tighter scene), not in the edit. | reviewer, Schedule v1 |
 | 36 | **Zoom on the proof, after the gesture.** The menu text and the timeline label were 3–4px tall on a phone. One eased zoom once nothing moves; rings and shading drawn before the camera (`pre`) so they zoom with the app. | reviewer, Schedule v1 |
 | 37 | **Keep subtitles out of YouTube's Skip zone** (bottom-right, from 0:05) for in-stream ads — and out of an open menu's way. | reviewer, Schedule v1 |
-| 38 | **Hooks hit hard.** A headline that only fades or rises over footage is not catchy. Use kinetic type on the hook: words slam in with blur and overshoot, and the key word gets a glitch or shake on impact. Calm ads keep it softer, never static. | "I NEED MORE ANIMATION HERE? TO BE MORE CATCHY, LIKE AGRESSIVE ANUMATION AND EFFECTS OF TYPOGRAPHY" |
+| 38 | **Hooks hit hard.** A headline that only fades or rises over footage is not catchy. Use kinetic type on the hook, synced to the voice (`frame-kit`: `hit`, `shake`, `glitch`, `flash`). Each word slams in on its spoken cue, and the key word lands with a flash, a shake and a glitch, then inverts on an accent bar. Frame 0 stays composed: the headline waits in outline and fills as it is said. Calm ads keep it softer, never static. Example: Schedule for me v7. | "I NEED MORE ANIMATION HERE? TO BE MORE CATCHY, LIKE AGRESSIVE ANUMATION AND EFFECTS OF TYPOGRAPHY" |
 
 ## How to work with the user (process)
 
@@ -102,3 +102,6 @@ User notes are quoted where they set the rule. Read this before scripting or fil
 | Critic warned "rushed" on every line | 3.0 words/s counted "aro dot day" as three words | brand counted once; WARN above 3.5/s |
 | Cursor froze during a drag | a pointer-event drag cancels the compat mouse events the cursor overlay follows | mirror synthetic `mousemove` events during manual drags (video-demo scene) |
 | App hover card covered the drop target | the strip's pointer drag cancels the mousedown that closes it (a product bug) | dispatch a `mousedown` on the dragged element, and file the bug |
+| The whole hook sat under a green tint | a GSAP `fromTo` applies its FROM state at creation (`immediateRender`) | `flash()` uses `immediateRender: false`; `hit()` relies on it to hide a word until its cue |
+| Check failed `text_not_painted` on outline text | a transparent fill reads as invisible text | `background-image: linear-gradient(transparent, transparent)` + `background-clip: text`, the checker's form for intentional transparency |
+| `content_overlap` on words that slam in | a word blown up mid-hit overlaps its neighbours | `data-layout-allow-overlap` on the kinetic lines |

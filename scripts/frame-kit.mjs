@@ -60,6 +60,7 @@ export function makeKit(config) {
   ${bg ? `<div id="f${id}-bg" class="clip" data-start="0" data-duration="${dur}" data-track-index="0"></div>` : ''}
   ${body}
   ${bug && brand.mark ? `<div id="f${id}-bug" class="${bug === 'hero' ? 'f-bug hero' : 'f-bug'}"${bug === 'hero' ? ' data-brand="hero"' : ''}><img src="${brand.mark}" alt=""><span>${brand.name ?? ''}</span></div>` : ''}
+  <div id="f${id}-flash" style="position: absolute; inset: 0; background: ${P.accent}; opacity: 0; pointer-events: none;"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <script>
@@ -73,6 +74,23 @@ export function makeKit(config) {
       tl.fromTo(q(el), { scale: 1 }, { scale: 1.05, duration: 0.16, ease: 'power3.out' }, at);
       tl.to(q(el), { scale: 1, duration: 0.32, ease: 'power3.out' }, at + 0.16);
     };
+    // Kinetic type (lessons #38). Seek-safe: tweens and sets only — no callbacks, no randomness.
+    // hit: a word slams in on its spoken cue — blown up and blurred, then a hard settle.
+    const hit = (el, at, { from = 2.6, blur = 16 } = {}) =>
+      tl.fromTo(q(el), { opacity: 0, scale: from, filter: 'blur(' + blur + 'px)' }, { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 0.24, ease: 'power4.out' }, at);
+    // shake: a decaying jolt (px). Shake the type group, not a word that also glitches.
+    const shake = (el, at, amp = 12) => [[1, -0.6], [-0.8, 0.5], [0.5, -0.3], [-0.25, 0.15], [0, 0]]
+      .forEach(([x, y], i) => tl.to(q(el), { x: x * amp, y: y * amp, duration: 0.04, ease: 'none' }, at + i * 0.04));
+    // glitch: RGB split + skew jitter for ~0.22s, then back to its own shadow (pink/cyan: the classic split).
+    const glitch = (el, at, amp = 9) => {
+      const own = getComputedStyle(q(el)).textShadow;
+      [[1, 6], [-0.6, -8], [0.9, 4], [-1, -3], [0.4, 0]].forEach(([a, sk], i) =>
+        tl.set(q(el), { textShadow: (a * amp) + 'px 0 rgba(255,42,109,.9), ' + (-a * amp) + 'px 0 rgba(5,217,232,.9)', skewX: sk }, at + i * 0.045));
+      tl.set(q(el), { textShadow: own, skewX: 0 }, at + 0.225);
+    };
+    // flash: the accent washes the whole frame on an impact.
+    // immediateRender false: a fromTo applies its FROM at t=0 — the frame sat tinted until the hit.
+    const flash = (at, a = 0.3) => tl.fromTo(q('#f${id}-flash'), { opacity: a }, { opacity: 0, duration: 0.22, ease: 'power2.out', immediateRender: false }, at);
     // enter: the ad's entrance (config.look.entrance) — use it for every overlay entrance.
     const enter = (el, at) => {
       const e = ${JSON.stringify(look.entrance)};
