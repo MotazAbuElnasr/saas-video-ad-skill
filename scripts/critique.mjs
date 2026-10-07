@@ -33,7 +33,10 @@ const AI_ISMS = [/seamless/i, /\bunlock/i, /streamline/i, /supercharge/i, /game[
   /,\s*not\s+(at\s+)?\w+\s*p\.?m/i, /—/,
   // Arabic lines translated word for word from the English ad (user: «اياك تترجم ترجمة حرفية وبلاش
   // دباجات ال AI»): "each on its own clock", "all three back on", "start again on their own"
-  /لوحد(ه|ها|هم)/, /كل\s+(واحد|واحدة|مهمة|تايمر)\s+(ليها|ليه|ب)?\s*(عدّاد|عداد)/, /(التلاتة|الاتنين|كلهم)\s+رجعوا/];
+  /لوحد(ه|ها|هم)/, /كل\s+(واحد|واحدة|مهمة|تايمر)\s+(ليها|ليه|ب)?\s*(عدّاد|عداد)/, /(التلاتة|الاتنين|كلهم)\s+رجعوا/,
+  // generation habits (script.md, "Another language"): the «مش X — Y» contrast, the «مفيش X ولا Y»
+  // reassurance tail, the slogan ending
+  /(^|\s)مش\s[^.؟!]*[—–-]\s/, /(^|\s)مش\s+بس\s/, /مفيش\s+\S+(\s+\S+)?\s+ولا\s/, /ومفيش\s+حاجة/, /كل\s+دقيقة\s+محسوبة/];
 for (const v of voices) {
   const s = spoken(v);
   for (const re of AI_ISMS) if (re.test(s))

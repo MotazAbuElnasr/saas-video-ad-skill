@@ -72,6 +72,21 @@ it the way the audience hears it once:
   English shape of the sentence.
 - **A quote the app shows on screen is read verbatim** (it may be MSA); everything else is the dialect.
 - **On-screen type follows the same rule** — cards, headlines and the end card are copy too.
+- **Read each line alone.** If it only makes sense once you translate it back to English in your
+  head, rewrite it from the meaning: close the English line and say the information the way you'd
+  say it to someone sitting across from you — don't edit the translation and keep its skeleton.
+- **Three generation habits that feel like clarity and read as AI** (they come back after you
+  remove them, so check every rewrite too):
+  1. the contrast «مش X — Y» / «مش بس X، ده Y»;
+  2. the wise ending that sums the line up again with a metaphor or a slogan («كل دقيقة محسوبة»);
+  3. an aside between dashes that wedges a mechanism into an action sentence.
+- **No reassurance tail** on the shape «مفيش X ولا Y» / «ومفيش حاجة …» — it is ad language selling
+  ease; end on what the viewer does or sees.
+- **A concrete moment beats general empathy.** Name the moment on screen — the three cards, the
+  hour, the meeting («الساعة اتنين، مكالمة العميل…») — not «كلنا بنقع في ده».
+- **Keep the information.** Count numbers, names and actions before and after a rewrite; a warmer
+  line that dropped one is a deletion, not an edit.
+- **Egyptian spelling:** «انت» without hamza in dialect lines.
 - **Show the lines + an English gloss to a native speaker before TTS** (the user offered to review
-  the dialect). The critic flags known calques (`ai-ism`), but only a native ear catches the rest.
+  the dialect). The critic flags the known patterns (`ai-ism`), but only a native ear catches the rest.
 
