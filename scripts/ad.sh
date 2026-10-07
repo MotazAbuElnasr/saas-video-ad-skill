@@ -10,6 +10,8 @@
 #   ad.sh all <out.mp4> [--fast]               voice → build → render → critique
 set -euo pipefail
 SKILL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# every stage (voice.mjs, the project's gen-frames) resolves THIS copy — a skill worktree stays isolated
+export AD_SKILL="${AD_SKILL:-$SKILL}"
 PLV="${PLV_SCRIPTS:-$HOME/.claude/skills/product-launch-video/scripts}"
 VD="${VIDEO_DEMO:-$HOME/.claude/skills/video-demo}"
 stage() { local name=$1; shift; local t0=$SECONDS; echo "▸ $name"; "$@"; echo "  ✓ $name $((SECONDS - t0))s"; }

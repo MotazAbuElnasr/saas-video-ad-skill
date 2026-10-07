@@ -13,14 +13,14 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { scriptLines } from './align-words.mjs';
 import { geminiLines } from './gemini-voice.mjs';
 
 const config = (await import(pathToFileURL(resolve('ad.config.mjs')).href)).default;
 const PLV = process.env.PLV_SCRIPTS ?? `${homedir()}/.claude/skills/product-launch-video/scripts`;
-const SKILL = process.env.AD_SKILL ?? `${homedir()}/.claude/skills/saas-video-ad`;
+const SKILL = process.env.AD_SKILL ?? resolve(dirname(fileURLToPath(import.meta.url)), '..'); // this copy, not the global symlink
 const force = process.argv.includes('--force');
 const v = { provider: 'heygen', speed: 1.0, ...config.voice };
 if (!v.id) throw new Error('voice: set ad.config.mjs → voice.id (a HeyGen voice id, or a Kokoro voice like am_michael)');

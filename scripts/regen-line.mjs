@@ -10,7 +10,7 @@ const [frame, must, tries = '4'] = process.argv.slice(2);
 const key = process.env.GEMINI_API_KEY ?? execFileSync('security', ['find-generic-password', '-s', 'gemini-api-key', '-w'], { encoding: 'utf8' }).trim();
 process.env.GEMINI_API_KEY = key;
 const config = (await import(pathToFileURL(`${process.cwd()}/ad.config.mjs`).href)).default;
-const { scriptLines } = await import(`${homedir()}/.claude/skills/saas-video-ad/scripts/align-words.mjs`);
+const { scriptLines } = await import('./align-words.mjs'); // this copy (a skill worktree stays isolated)
 const { synthesizeGemini } = await import(`${homedir()}/.claude/skills/media-use/audio/scripts/lib/gemini-tts.mjs`);
 const v = config.voice;
 const written = scriptLines().find((l) => l.frame === +frame).text;
