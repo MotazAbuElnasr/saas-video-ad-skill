@@ -92,7 +92,8 @@ if (lastFootage) {
 }
 for (const e of config.events ?? []) {
   const v = voices.find((x) => x.frame === e.frame);
-  const w = v?.words.find((x) => x.text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') === e.word.toLowerCase());
+  const norm = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''); // both sides: Arabic marks (shadda) are not letters
+  const w = v?.words.find((x) => norm(x.text) === norm(e.word));
   if (!w) { add('WARN', 'event-word', `event "${e.word}" not spoken in frame ${e.frame}`, '', 'fix config.events'); continue; }
   const d = w.start - e.at(config.marks ?? {}, (n) => voices.find((x) => x.frame === n).duration_s);
   if (d < -0.05) add('FAIL', 'voice-ahead', `frame ${e.frame}: "${e.word}" is said ${(-d).toFixed(2)}s BEFORE the event it names`, '"over by an hour is not synced with the video"', 'pads(): lead so the word lands just after the event');

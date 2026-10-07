@@ -5,7 +5,7 @@
 // Per-line cache (.hyperframes/gemini-lines.json): a line whose text/voice/style/model is unchanged
 // and whose wav exists is not re-bought — a run that dies mid-way (402: prepaid credits ran out)
 // resumes where it stopped.
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -24,12 +24,60 @@ const trim = (rel) => {
   renameSync(tmp, rel);
 };
 
-export async function geminiLines({ id, style, model, saidAs = [] }) {
+// Retry on the API's "retry in …": a short wait is retried; the DAILY cap ("retry in 13h5m14s",
+// 100/day on Tier 1) stops at once, naming the reset; a dropped connection gets a short retry.
+async function withRetry(label, call) {
+  for (let attempt = 1; ; attempt++) {
+    const r = await call();
+    if (r.ok) return r;
+    const msg = String(r.error ?? '');
+    if (/402|prepayment credits/i.test(msg)) throw new Error('gemini-voice: the API project is out of prepaid credits — top up at https://ai.studio/projects (Billing), then re-run');
+    const m = msg.match(/retry in (?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?/i);
+    const secs = m ? (+(m[1] ?? 0)) * 3600 + (+(m[2] ?? 0)) * 60 + (+(m[3] ?? 0)) : 20;
+    if (/429|rate limit/i.test(msg) && secs > 120)
+      throw new Error(`gemini-voice: the Gemini TTS quota is used up (${msg.match(/limit: [^).]*/i)?.[0] ?? 'rate limit'}) — it resets in ${Math.round(secs / 3600)}h; upgrade the tier at https://ai.dev/rate-limit or re-run later`);
+    const wait = /429|rate limit/i.test(msg) ? Math.ceil(secs) + 1 : /fetch failed|ECONNRESET|ETIMEDOUT|socket|network|HTTP 5\d\d|timed? ?out|aborted/i.test(msg) ? 3 * attempt : 0;
+    if (!wait || attempt >= 8) throw new Error(`gemini-voice: ${label} failed — ${msg.slice(0, 300)}`);
+    console.log(`  voice ${label}: rate-limited, waiting ${wait}s`);
+    await sleep(wait * 1000);
+  }
+}
+
+// One request for the lines that have no take yet, cut at its pauses (user: "better to get one voice
+// request then cut it"): one quota hit per ad instead of one per line — the 100/day cap is shared by
+// every session on the key and ran out mid-ad — and one consistent read. The lines go in as
+// paragraphs with a pause asked for between them; the take is cut in the middle of its N−1 longest
+// silences. False when those pauses don't clearly separate the lines (each ≥ 0.45s) — the caller
+// then voices line by line.
+async function wholeTake(lines, { id, style, model }, synthesizeGemini) {
+  const all = 'assets/voice/script.wav';
+  const text = lines.map((l) => l.text).join('\n\n');
+  const paced = `${style ?? ''} Leave a clear pause of about one second between paragraphs.`.trim();
+  await withRetry('script', () => synthesizeGemini({ text, voiceId: id, style: paced, ...(model ? { model } : {}), wavAbs: `${process.cwd()}/${all}` }));
+  const total = +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', all], { encoding: 'utf8' });
+  const log = spawnSync('ffmpeg', ['-hide_banner', '-i', all, '-af', 'silencedetect=noise=-40dB:d=0.25', '-f', 'null', '-'], { encoding: 'utf8' }).stderr;
+  const starts = [...log.matchAll(/silence_start: ([\d.]+)/g)].map((x) => +x[1]);
+  const ends = [...log.matchAll(/silence_end: ([\d.]+)/g)].map((x) => +x[1]);
+  const gaps = starts.map((st, i) => ({ st, en: ends[i] ?? total })).filter((g) => g.st > 0.05 && g.en < total - 0.05);
+  const picked = [...gaps].sort((x, y) => (y.en - y.st) - (x.en - x.st)).slice(0, lines.length - 1);
+  if (picked.length < lines.length - 1 || picked.some((g) => g.en - g.st < 0.45)) return false;
+  const cuts = [0, ...picked.sort((x, y) => x.st - y.st).map((g) => (g.st + g.en) / 2), total];
+  lines.forEach((l, k) => {
+    execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', all, '-ss', cuts[k].toFixed(3), '-to', cuts[k + 1].toFixed(3), l.rel]);
+    rmSync(l.rel.replace(/\.wav$/, '.raw.wav'), { force: true }); // stale raw = the previous voice
+    trim(l.rel);
+    writeFileSync(l.take, readFileSync(l.rel));
+  });
+  return true;
+}
+
+export async function geminiLines({ id, style, model, saidAs = [], perLine = false }) {
   const { synthesizeGemini } = await import(`${homedir()}/.claude/skills/media-use/audio/scripts/lib/gemini-tts.mjs`);
   mkdirSync('assets/voice', { recursive: true });
   mkdirSync(TAKES, { recursive: true });
   const cache = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, 'utf8')) : {};
-  for (const { frame, text: written } of scriptLines()) {
+  const save = () => writeFileSync(CACHE, JSON.stringify(cache, null, 2));
+  const lines = scriptLines().map(({ frame, text: written }) => {
     // saidAs: TTS-only respellings (aro → arrow); captions and cue() keep the SCRIPT's words
     const text = saidAs.reduce((t, [re, to]) => t.replace(re, to), written);
     const rel = `assets/voice/${String(frame).padStart(2, '0')}.wav`;
@@ -37,43 +85,38 @@ export async function geminiLines({ id, style, model, saidAs = [] }) {
     // Every take is archived by its key (.hyperframes/takes/<key>.wav): trying another model or style
     // never loses the old voice — switching back restores it free (a Pro-model experiment overwrote
     // the approved takes, and "every cut has its own voice" could only be undone by re-buying them).
-    const take = `${TAKES}/${key}.wav`;
-    if (existsSync(take)) {
-      writeFileSync(rel, readFileSync(take));
-      if (cache[frame] !== key) { cache[frame] = key; writeFileSync(CACHE, JSON.stringify(cache, null, 2)); }
-      rmSync(rel.replace(/\.wav$/, '.raw.wav'), { force: true }); // pad-voices re-makes the raw from this take
-      console.log(`  voice ${frame}: cached`);
-      continue;
+    return { frame, text, rel, key, take: `${TAKES}/${key}.wav` };
+  });
+  const todo = [];
+  for (const l of lines) {
+    if (existsSync(l.take)) {
+      writeFileSync(l.rel, readFileSync(l.take));
+      if (cache[l.frame] !== l.key) { cache[l.frame] = l.key; save(); }
+      rmSync(l.rel.replace(/\.wav$/, '.raw.wav'), { force: true }); // pad-voices re-makes the raw from this take
+      console.log(`  voice ${l.frame}: cached`);
+    } else if (cache[l.frame] === l.key && existsSync(l.rel)) {
+      // .raw.wav: pad-voices pads NN.wav in place — the cached take is the raw file, if present
+      if (existsSync(l.rel.replace(/\.wav$/, '.raw.wav'))) writeFileSync(l.rel, readFileSync(l.rel.replace(/\.wav$/, '.raw.wav')));
+      trim(l.rel);
+      writeFileSync(l.take, readFileSync(l.rel)); // archive takes made before the archive existed
+      console.log(`  voice ${l.frame}: cached`);
+    } else todo.push(l);
+  }
+  // voice.perLine: one request per line (a retake of a single line goes through regen-line.mjs)
+  if (!perLine && todo.length > 1) {
+    if (await wholeTake(todo, { id, style, model }, synthesizeGemini)) {
+      for (const l of todo) cache[l.frame] = l.key;
+      save();
+      console.log(`  voice: one take for ${todo.length} lines, cut at its pauses (gemini ${id})`);
+      return;
     }
-    // .raw.wav: pad-voices pads NN.wav in place — the cached take is the raw file, if present
-    if (cache[frame] === key && existsSync(rel)) {
-      if (existsSync(rel.replace(/\.wav$/, '.raw.wav'))) writeFileSync(rel, readFileSync(rel.replace(/\.wav$/, '.raw.wav')));
-      trim(rel);
-      writeFileSync(take, readFileSync(rel)); // archive takes made before the archive existed
-      console.log(`  voice ${frame}: cached`);
-      continue;
-    }
-    for (let attempt = 1; ; attempt++) {
-      const r = await synthesizeGemini({ text, voiceId: id, style, ...(model ? { model } : {}), wavAbs: `${process.cwd()}/${rel}` });
-      if (r.ok) {
-        rmSync(rel.replace(/\.wav$/, '.raw.wav'), { force: true }); // stale raw = the previous voice
-        trim(rel);
-        writeFileSync(take, readFileSync(rel));
-        console.log(`  voice ${frame}: gemini ${id}`); cache[frame] = key; writeFileSync(CACHE, JSON.stringify(cache, null, 2)); break;
-      }
-      const msg = String(r.error ?? '');
-      if (/402|prepayment credits/i.test(msg)) throw new Error('gemini-voice: the API project is out of prepaid credits — top up at https://ai.studio/projects (Billing), then re-run');
-      // "retry in 13h5m14s" is the DAILY cap (100/day on Tier 1) — read h/m/s, and stop at once
-      // when the wait is long (it read as "14s" once and retried 8 times for nothing)
-      const m = msg.match(/retry in (?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?/i);
-      const secs = m ? (+(m[1] ?? 0)) * 3600 + (+(m[2] ?? 0)) * 60 + (+(m[3] ?? 0)) : 20;
-      if (/429|rate limit/i.test(msg) && secs > 120)
-        throw new Error(`gemini-voice: the Gemini TTS quota is used up (${msg.match(/limit: [^).]*/i)?.[0] ?? 'rate limit'}) — it resets in ${Math.round(secs / 3600)}h; upgrade the tier at https://ai.dev/rate-limit or re-run later`);
-      // a dropped connection ("fetch failed", a 5xx) is worth a short retry; anything else is not
-      const wait = /429|rate limit/i.test(msg) ? Math.ceil(secs) + 1 : /fetch failed|ECONNRESET|ETIMEDOUT|socket|network|HTTP 5\d\d|timed? ?out|aborted/i.test(msg) ? 3 * attempt : 0;
-      if (!wait || attempt >= 8) throw new Error(`gemini-voice: line ${frame} failed — ${msg.slice(0, 300)}`);
-      console.log(`  voice ${frame}: rate-limited, waiting ${wait}s`);
-      await sleep(wait * 1000);
-    }
+    console.log("  voice: the take's pauses did not separate the lines — voicing line by line");
+  }
+  for (const l of todo) {
+    await withRetry(`line ${l.frame}`, () => synthesizeGemini({ text: l.text, voiceId: id, style, ...(model ? { model } : {}), wavAbs: `${process.cwd()}/${l.rel}` }));
+    rmSync(l.rel.replace(/\.wav$/, '.raw.wav'), { force: true }); // stale raw = the previous voice
+    trim(l.rel);
+    writeFileSync(l.take, readFileSync(l.rel));
+    console.log(`  voice ${l.frame}: gemini ${id}`); cache[l.frame] = l.key; save();
   }
 }

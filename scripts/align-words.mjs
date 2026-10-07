@@ -39,8 +39,14 @@ export function align(scriptWords, heard) {
   let pi = 0, pj = 0;
   const end = heard.at(-1)?.end ?? 0;
   for (const [i, j] of [...pairs, [scriptWords.length, heard.length]]) {
-    const t0 = pj < heard.length ? heard[pj].start : end, t1 = j < heard.length ? heard[j].start : end;
-    fill(pi, i, t0, Math.max(t0, t1));
+    // Between anchors, as many words heard as written: take them one to one. Whisper misspells
+    // Arabic («إلفع» for «ارفع», «ركس» for «ركّز»), so a line could have no exact match at all and
+    // every word was spread evenly — the CTA cue landed seconds early.
+    if (i - pi === j - pj) for (let k = 0; k < i - pi; k++) out[pi + k] = { text: scriptWords[pi + k], start: heard[pj + k].start, end: heard[pj + k].end };
+    else {
+      const t0 = pj < heard.length ? heard[pj].start : end, t1 = j < heard.length ? heard[j].start : end;
+      fill(pi, i, t0, Math.max(t0, t1));
+    }
     if (i < scriptWords.length) out[i] = { text: scriptWords[i], start: heard[j].start, end: heard[j].end };
     pi = i + 1; pj = j + 1;
   }

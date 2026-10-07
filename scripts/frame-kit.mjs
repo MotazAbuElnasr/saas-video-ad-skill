@@ -12,18 +12,24 @@
 // - Footage frames are transparent (OVER) and post-assemble.mjs lifts frames above video,
 //   so overlays draw on top of the full-screen app.
 
+// One face per family in fonts.script: a bundled file when fonts.scriptFiles names one (a variable
+// woff2 — one file covers 100–900), else the system font via local(). Every family needs a face:
+// the check fails "font_family_without_font_face" and the renderer only supplies declared fonts.
+export const scriptFaces = (F = {}) => (F.script?.match(/"[^"]+"/g) ?? []).map((q) => {
+  const file = F.scriptFiles?.[q.slice(1, -1)];
+  return `@font-face { font-family: ${q}; src: ${file ? `url("${file}") format("woff2")` : `local(${q})`}; font-weight: 100 900; }`;
+});
+
 export function makeKit(config) {
   const P = { ink: '#1c2330', cream: '#fafbfc', accent: '#2563eb', alert: '#dc2626', muted: '#a3acbb', rule: '#39414f', ...config.palette };
   const F = config.fonts ?? {};
   // fonts.script: a family for another script (Arabic), joined after the brand fonts so Latin
-  // stays Inter and Arabic letters fall through to it — e.g. '"SF Arabic", "Geeza Pro"'.
-  // System fonts need a local() face (the check fails "font_family_without_font_face", and the
-  // renderer only supplies declared fonts); the weight range keeps the variable axis (no faux bold).
+  // stays Inter and Arabic letters fall through to it — e.g. '"Alexandria", "SF Arabic"'.
   const script = F.script ? `${F.script}, ` : '';
   const fontFaces = [
     ...Object.entries(F.display?.files ?? {}).map(([w, src]) => `@font-face { font-family: "${F.display.family}"; font-weight: ${w}; src: url("${src}") format("woff2"); }`),
     ...Object.entries(F.mono?.files ?? {}).map(([w, src]) => `@font-face { font-family: "${F.mono.family}"; font-weight: ${w}; src: url("${src}") format("woff2"); }`),
-    ...(F.script?.match(/"[^"]+"/g) ?? []).map((q) => `@font-face { font-family: ${q}; src: local(${q}); font-weight: 100 900; }`),
+    ...scriptFaces(F),
   ].join('\n  ');
   const display = F.display?.family ?? 'sans-serif';
   const mono = F.mono?.family ?? 'monospace';

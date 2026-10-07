@@ -2,7 +2,7 @@
 //
 // Merge — the engine splits a group at every comma and caps it at 2–4 words, so groups like
 // "if you" flashed for 0.25s (review: unreadable, machine line breaks). A group visible for
-// < 0.6s joins its neighbour in the same frame while the line stays ≤ 32 characters.
+// < 0.6s (or a line's lone last word) joins its neighbour in the same frame while the line stays ≤ 32 characters.
 //
 // Moves — the subtitle band gets out of the way while the app's own UI sits under it (a toast,
 // a dialog's buttons): subtitles must never cover the thing being talked about.
@@ -16,6 +16,7 @@
 // active-word highlight (palette.captionAccent ?? palette.accent) and the box (palette.captionInk).
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { config, cue, dur, meta } from './timing.mjs';
+import { scriptFaces } from './frame-kit.mjs';
 
 const p = 'compositions/captions.html';
 if (!existsSync(p)) process.exit(0);
@@ -33,8 +34,10 @@ if (m) {
   for (let changed = true; changed;) {
     changed = false;
     for (let i = 0; i < groups.length; i++) {
-      if (shown(i) >= MIN_SHOW) continue;
       const g = groups[i], next = groups[i + 1], prev = groups[i - 1];
+      // a lone last word of a line («تايمر.» after «مع aro.day لكل مهمة») shrank the band mid-sentence
+      const widow = g.words.length === 1 && prev?.frame === g.frame && next?.frame !== g.frame;
+      if (shown(i) >= MIN_SHOW && !widow) continue;
       if (next && next.frame === g.frame && `${g.text} ${next.text}`.length <= MAX_CHARS) groups.splice(i, 2, join(g, next));
       else if (prev && prev.frame === g.frame && `${prev.text} ${g.text}`.length <= MAX_CHARS) groups.splice(i - 1, 2, join(prev, g));
       else continue;
@@ -55,9 +58,9 @@ if (config.palette?.captionInk) html = html.replace(/--cap-ink: [^;]+;/, `--cap-
 // (voice.lang ar | he | fa | ur) reads right-to-left, and letter-spacing breaks joined letters.
 const script = config.fonts?.script;
 if (script) html = html.replace(/font-family: ([^;]+);/g, (m, fam) => (fam.includes(script) ? m : `font-family: ${fam.replace(',', `, ${script},`)};`));
-// system fonts need a local() face, like frame-kit's (the check fails without one)
+// every script family needs a face, like frame-kit's (the check fails without one)
 if (script && !html.includes('/* script faces */'))
-  html = html.replace('<style>', `<style>\n      /* script faces */ ${(script.match(/"[^"]+"/g) ?? []).map((q) => `@font-face { font-family: ${q}; src: local(${q}); font-weight: 100 900; }`).join(' ')}`);
+  html = html.replace('<style>', `<style>\n      /* script faces */ ${scriptFaces(config.fonts).join(' ')}`);
 if (/^(ar|he|fa|ur)\b/.test(config.voice?.lang ?? '') && !html.includes('/* rtl */'))
   html = html.replace('  .caption-group {', '  /* rtl */ .caption-group { direction: rtl; } .caption-group, .caption-word { letter-spacing: 0 !important; }\n  .caption-group {');
 

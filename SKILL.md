@@ -179,7 +179,8 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 - Subtitles on, merged to ≥ 0.6s groups, current word highlighted, hidden where on-screen type
   says the line, never over the thing being talked about (or YouTube's bottom-right Skip zone).
 - Frame 0 = the real app, undimmed, plus one banner/lockup; no parked cursor. Kinetic hooks keep it
-  composed: the headline waits in outline and fills word by word as it is said.
+  composed: the headline is whole and solid at frame 0, and each word pops as it is said — never
+  outline, faint or translucent type (lessons #50).
 - Each ad in a series gets its own look (theme of the footage, accent, entrance, card, hook
   layout, end card, bed) — similar, not the same.
 - End card on a neutral/dark ground (never the brand blue) unless the user picks a fill.
