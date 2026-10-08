@@ -7,6 +7,11 @@
 // 100/day cap shared by every session on the key. voice.perLine: one request per line instead
 // (a single line is retaken with regen-line.mjs either way).
 //
+// An EDITED line retakes only itself: the whole-script take runs only when no line has a take
+// yet. Re-voicing the whole script for one changed word gave every approved line a new, slower
+// read (Take a break: 26.0s → 29.7s, "v2 was better! it was faster") and overwrote their archived
+// takes under the same keys.
+//
 // Every take is archived by its key (.hyperframes/takes/<key>.wav) — trying another model or style
 // never loses the approved voice, and switching back restores it free. One request at a time,
 // honouring "retry in Ns"; a long wait is the DAILY cap and stops at once with the reset time.
@@ -130,10 +135,10 @@ export async function geminiLines({ id, style, model, saidAs = [], perLine = fal
   }
   if (!todo.length) return;
 
-  if (!perLine && lines.length > 1) {
-    // The WHOLE script, not only the missing lines: one performance across the ad (an edited line
-    // re-voices every line, still one request — to keep approved lines, retake just the edited one
-    // with regen-line.mjs). The full take is archived by its text: a recut is free.
+  if (!perLine && lines.length > 1 && todo.length === lines.length) {
+    // A fresh ad (or --recut): the WHOLE script in one performance. Approved takes are never
+    // re-voiced — when only some lines changed, those lines go one request each below, so the
+    // rest keep their read and their archived take. The full take is archived by its text: a recut is free.
     const text = lines.map((l) => l.text).join('\n\n');
     const paced = `${style ?? ''} This is one continuous voice-over: keep the same voice, pace and energy throughout. Leave a clear pause of about one second between paragraphs.`.trim();
     const full = `${TAKES}/script-${sha([text, id, style ?? '', model ?? ''])}.wav`;

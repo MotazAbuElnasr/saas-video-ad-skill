@@ -92,7 +92,8 @@ step skipped when its inputs are unchanged. What it handles (each cost a rebuild
   one request:** the whole script in ONE take, cut into lines at its paragraph pauses (Whisper
   anchors each boundary; silencedetect on stderr; < 28s transcription chunks) — per-line requests
   gave every line its own voice and spent the shared daily cap. `voice.perLine: true` opts out.
-  `voice.mjs --recut` cuts the cached take again for free. Every take is archived by key; each
+  `voice.mjs --recut` cuts the cached take again for free. **An edited line retakes only itself**
+  (one request per changed line); approved lines keep their take and pace (lessons #68). Every take is archived by key; each
   line is trimmed to 0.08s lead / 0.12s tail. One model per ad (lessons #49).
   Free default: Kokoro `af_heart` at 0.8 (its A-graded voice; the male voices grade C+). Kokoro
   needs a python with kokoro-onnx — `voice.mjs` reuses video-demo's venv; lines run 8 at a time.
