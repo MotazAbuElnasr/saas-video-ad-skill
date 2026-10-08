@@ -14,6 +14,10 @@ meta.voices = [];
 for (const { frame: f, text } of scriptLines()) {
   const path = `assets/voice/${String(f).padStart(2, '0')}.wav`;
   if (!existsSync(path)) throw new Error(`recover-voice: missing ${path}`);
+  // NN.raw.wav is the unpadded take: put it back first. Run over padded NN.wav, the next pad pass
+  // took them for fresh raws and padded every line twice (a 0.4s lead + 1.8s tail baked into the CTA).
+  const raw = path.replace(/\.wav$/, '.raw.wav');
+  if (existsSync(raw)) writeFileSync(path, readFileSync(raw));
   // VOICE_LANG (voice.lang): English gets the English model (small: base.en's word starts ran
   // ~0.3s late — the subtitle highlight lagged); any other language the multilingual one, told
   // the language (Whisper's English model can't hear Arabic).

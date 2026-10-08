@@ -82,9 +82,9 @@ if (!hookHasBug) add('WARN', 'logo-missing', 'no logo in the hook frame', '"we n
 else if (!hookHtml.includes('f-bug hero') && !hookHtml.includes('data-brand="hero"')) add('WARN', 'logo-small', 'hook logo is the small corner bug (~0.4% of frame) — hard to read on a phone', 'research: logo readable within 5s (ABCD detector uses 3.5%)', 'base(..., { bug: "hero" }) on the hook frame');
 const allWords = voices.reduce((n, v) => n + v.words.length, 0);
 if (allWords / total * 30 > 80) add('WARN', 'words-per-30s', `${Math.round(allWords / total * 30)} words per 30s (target ≈ 75 — about 150 wpm)`, 'research: VO pace', 'cut words, not speed');
-const endWords = voices.at(-1) ? spoken(voices.at(-1)).toLowerCase() : '';
-// Arabic CTAs too (ابدأ start · جرب try · سجل sign up · حمّل download · مجان free): \b is ASCII-only
-if (!/\b(try|start|get|visit|download|sign up|join|free|today)\b|ابدأ|جرب|سجل|حمّل|حمل|مجان/.test(endWords))
+const endWords = voices.at(-1) ? spoken(voices.at(-1)).toLowerCase().replace(/\p{M}/gu, '') : ''; // marks off: «جرّبه» has a shadda
+// Arabic CTAs too (ابدأ start · جرب try · سجل sign up · حمل download · مجان / ببلاش free): \b is ASCII-only
+if (!/\b(try|start|get|visit|download|sign up|join|free|today)\b|ابدأ|جرب|سجل|حمل|مجان|ببلاش/.test(endWords))
   add('WARN', 'no-cta', `the last line has no spoken call to action ("${voices.at(-1) ? spoken(voices.at(-1)) : ''}")`, 'research: say the CTA + show it; the user decides', 'e.g. "Start free at <brand>" — ask before adding');
 
 // ── Pacing / holds / sync ───────────────────────────────────────────────────
@@ -173,6 +173,13 @@ if (!existsSync('compositions/captions.html')) add('WARN', 'no-subtitles', 'no c
 const last = frameIds.at(-1) && existsSync(`compositions/frames/${frameIds.at(-1)}.html`) ? readFileSync(`compositions/frames/${frameIds.at(-1)}.html`, 'utf8') : '';
 if (config.palette?.accent && new RegExp(`-bg \\{[^}]*background: ${config.palette.accent}`, 'i').test(last))
   add('WARN', 'end-card-accent', 'end card is an accent fill', '"I don\'t want blue background"', 'ink ground unless the user chose otherwise');
+// A bed that hums: a steady low band (air conditioning, a fountain's rumble, wind) was "humming
+// background music" to the user. Mean level below 150 Hz within 10 dB of the whole = a hum.
+if (existsSync('assets/bgm/track.mp3') && !/^music:\s*none\s*$/mi.test(sb)) {
+  const mean = (af) => +(spawnSync('ffmpeg', ['-hide_banner', '-i', 'assets/bgm/track.mp3', '-af', af, '-f', 'null', '-'], { encoding: 'utf8' }).stderr.match(/mean_volume: (-?[\d.]+)/)?.[1] ?? NaN);
+  const gap = mean('volumedetect') - mean('lowpass=f=150,volumedetect');
+  if (gap < 10) add('WARN', 'bed-hum', `the bed's low band sits ${gap.toFixed(1)} dB under the whole — it hums`, '"I didn\'t like the humming background music"', 'another natural bed; check its spectrogram for steady bands');
+}
 // music.upbeat: true = the user asked for energy — a calm bed under a feature ad was "very calm,
 // not okay" (Plan your week v3); the ambient default still holds for calm ads (the break ad)
 if (!config.music?.upbeat && /driving|energetic|punchy kick|upbeat/i.test(sb.match(/^music:.*$/m)?.[0] ?? ''))

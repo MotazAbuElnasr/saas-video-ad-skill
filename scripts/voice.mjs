@@ -145,6 +145,8 @@ if (force || keys.sfx !== want.sfx || !keys.padded || keys.pads !== padsKey) {
 // nearly as loud as the voice. music.volume / sfxVolume override per ad.
 {
   const m = JSON.parse(readFileSync('audio_meta.json', 'utf8'));
+  // `music: none` (sound effects only): drop a bed left from an earlier pass — it stayed in the mix
+  if (/^music:\s*none\s*$/mi.test(sb)) delete m.bgm;
   if (m.bgm && config.music?.volume != null) m.bgm.volume = config.music.volume;
   if (config.music?.sfxVolume != null) for (const s of m.sfx ?? []) s.volume = config.music.sfxVolume;
   // An effect lands ON its event (the click, the orb), not at the frame start, and ends with it:
