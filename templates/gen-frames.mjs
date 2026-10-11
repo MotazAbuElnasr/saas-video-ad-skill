@@ -7,7 +7,9 @@ import { homedir } from 'node:os';
 const SKILL = process.env.AD_SKILL ?? `${homedir()}/.claude/skills/saas-video-ad`;
 const { config, cue, dur, marks } = await import(`${SKILL}/scripts/timing.mjs`);
 const { makeKit } = await import(`${SKILL}/scripts/frame-kit.mjs`);
-const { base, footage, card, OVER, P } = makeKit(config);
+// W/H/safe/safeBox/px: lay a vertical (9:16) ad out from these — text stays inside safeBox (platform UI
+// covers the rest); see examples/aroday-it-fits/gen-frames.vertical.mjs. The px values below are 16:9.
+const { base, footage, card, OVER, P, W, H, safe, safeBox, px } = makeKit(config);
 const frames = {};
 
 // 01 — HOOK. Composed at frame 0 (it is the thumbnail): text on screen from t=0, punched on its words.

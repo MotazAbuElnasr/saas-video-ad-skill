@@ -40,12 +40,12 @@ Each step has a gate. Don't skip ahead — the order exists because the reverse 
 ### 1. Intake — ask, don't assume
 Run the questions in [references/intake.md](references/intake.md): product + the ONE thing
 the ad sells, the user's own storyline/script (verbatim or restructure), destination +
-aspect, length, **style** (show presets or use the product's brand), **colours** (from the
+**format** (16:9 / 9:16 / 1:1, always asked, never inferred: it changes how the takes are filmed), length, **style** (show presets or use the product's brand), **colours** (from the
 app's theme tokens, hex the user gives, or a preset palette), **voice** (provider, gender,
 voice id, speed), music (ambient / none / SFX only), captions, end-card text + background,
 CTA. Ask in **plain text** with lettered options — question popups get dismissed.
 Recommend one option per question; inferred answers are listed separately so the user can correct them.
-**Gate:** a written brief the user said yes to.
+**Gate:** a written brief the user said yes to, with the format named in it.
 
 ### 2. Script — before any footage or TTS
 Draft the script per [references/script.md](references/script.md). Offer **5–7 hook
@@ -204,9 +204,28 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
   layout, end card, bed) — similar, not the same.
 - End card on a neutral/dark ground (never the brand blue) unless the user picks a fill.
 
+## Vertical (9:16) and square
+One config key turns the whole pipeline vertical: `aspect: '9:16'` (or `format: { width: 1080, height: 1920 }`;
+`'1:1'` / `'4:5'` take the same keys — not yet verified on a real ad) in `ad.config.mjs`, **and** `format: 1080x1920` in the STORYBOARD
+frontmatter (the assembler and captions size the canvas from it — `build.sh` fails on a mismatch).
+Shots bake at the canvas size, frames get its `data-width/height`, `render.sh` asserts the MP4's size.
+Example: `examples/aroday-it-fits/ad.config.vertical.mjs` + `gen-frames.vertical.mjs` (`vertical-strip.jpg`).
+- **Framing per shot.** The footage stays 1920×1080; each shot picks what a phone sees:
+  `crop: [x, y, w, h]` (source px, cover-fit — keep it 9:16 and inside the source, ≈ 608×1080 wide at
+  most: UI text reads ~1.8× bigger), or `stage` for a beat whose gesture crosses the whole app (the app
+  floats as a landscape panel, `s: 0.92` ≈ 994 px wide, type above/below it). No crop and no stage =
+  the whole app letterboxed (bake + critic warn). Moves take crops too: `moves: [{ at, d, to: { crop } }]`.
+- **Boxes in a reframed shot are SOURCE px** (the same numbers as the 16:9 ad): mapped through the
+  crop, or drawn before the camera when it moves (ring width kept ≈ t px at that moment).
+- **Safe zone** (`formatOf(config).safe`, best-practices #23–24): top 220, bottom 420, right 120,
+  left 60 px on 1080×1920 are platform UI. The kit returns `W`, `H`, `safe`, `safeBox`, `px` — lay type
+  out from them; the logo bug/hero default inside it; subtitles lift to y 1300–1500 and narrow clear of
+  the buttons (`captionBand: { top, height }` overrides). The critic WARNs `safe-zone`, `letterboxed`,
+  `panel-wide`. Override zones with `format.safe`.
+- Frames are re-laid out, not scaled: copy the 16:9 gen-frames, stack lines in the safe column
+  (≈ 900 px wide: ~130–160 px type for a short line), cards in the bands above/below a panel.
+
 ## Roadmap (not built yet — say so if asked)
-- 9:16 and 1:1 cut-downs: a static crop per beat around the action, inside the platform safe
-  zones in `best-practices.md`. Research says to ship all three formats.
 - 6s and 15s cut-downs from the same project.
 
 ## Files
@@ -214,13 +233,14 @@ Every overlay, ring and cut re-times itself from the new word timestamps.
 | Path | What |
 |---|---|
 | `scripts/timing.mjs` | durations + word cues from `audio_meta.json`, loads `ad.config.mjs` |
-| `scripts/bake-clips.mjs` | footage → `assets/shot-<frame>.mp4` (range, framing, eased moves, rings) |
+| `scripts/bake-clips.mjs` | footage → `assets/shot-<frame>.mp4` at the canvas size (range, crop/framing, eased moves, rings, stage) |
 | `scripts/pad-voices.mjs` | normalise voices (raw audio, script-aligned words), then lead/tail pads |
 | `scripts/align-words.mjs` | heard (Whisper) timings → the SCRIPT's words |
 | `scripts/recover-voice.mjs` | rebuild voice timings from wavs on disk (no TTS) |
 | `scripts/caption-moves.mjs` | subtitles: merge short groups, move/hide between groups, per-ad tint |
 | `scripts/caption-meta.mjs` | spoken spelling → written brand in subtitles |
-| `scripts/frame-kit.mjs` | `makeKit(config)` → `base`, `footage`, `card`, `OVER`, `enter` (per-ad look) |
+| `scripts/frame-kit.mjs` | `makeKit(config)` → `base`, `footage`, `card`, `OVER`, `enter` (per-ad look), `W`/`H`/`safe`/`safeBox`/`px` |
+| `scripts/format.mjs` | canvas size + safe zones from `aspect`/`format`, crop → camera maths; `--check` vs STORYBOARD |
 | `scripts/post-assemble.mjs` | lifts frames above hoisted footage so overlays show |
 | `scripts/ad.sh` | one command per stage: `new`, `film`, `voice`, `build`, `render`, `critique`, `all` |
 | `scripts/voice.mjs` | cached TTS → BGM → SFX → pads → durations → listener |

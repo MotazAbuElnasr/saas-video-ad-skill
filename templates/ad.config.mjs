@@ -3,6 +3,9 @@
 // See examples/aroday-it-fits/ad.config.mjs for a filled-in version.
 export default {
   brand: { name: 'acme.app', mark: 'assets/brand-mark.svg' },
+  // Output canvas. Default 16:9 (1920×1080). Vertical: aspect: '9:16' (or format: { width: 1080, height: 1920 })
+  // AND "format: 1080x1920" in STORYBOARD.md; then give every shot a `crop` or a `stage` (see shots below).
+  // aspect: '9:16',
   // TTS: HeyGen voice id (list: media-use/audio/scripts/heygen-tts.mjs --list) or Kokoro (am_michael…).
   voice: { provider: 'heygen', id: '<voice-id>', speed: 1.0 },
 
@@ -31,6 +34,12 @@ export default {
   shots({ dur, cue, marks, full, config }) {
     return {
       // '02-answer': full('clip-a.mp4', 0, dur(2), { boxes: [{ ...config.ring, from: cue(2, 'seven') }] }),
+      // 9:16 — crop (source px, ~9:16, inside 1920×1080); boxes stay in SOURCE px and map through it:
+      // '03-detail': full('clip-a.mp4', 3, dur(3), { crop: [850, 0, 608, 1080], boxes: [{ ...config.ring, from: 1.2 }] }),
+      // 9:16 — a gesture across the whole app: the app as a floating panel (≈ 994 px wide), type above/below;
+      // a move can push onto a crop inside the panel:
+      // '04-wide': full('clip-b.mp4', 2.6, dur(4), { stage: { s: 0.92, from: { ry: 0, rx: 0, z: 1 }, to: { ry: 0, rx: 0, z: 1 } },
+      //   moves: [{ at: 1.5, d: 0.6, to: { crop: [1040, 20, 760, 428] } }], boxes: [{ ...config.ring, from: 2.2 }] }),
     };
   },
 

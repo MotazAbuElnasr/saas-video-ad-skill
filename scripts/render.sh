@@ -15,6 +15,12 @@ got=$(grep -oE '"videoCount":[0-9]+' "$log" | head -1 | cut -d: -f2)
 grep -E "MB ·" "$log" | head -1
 echo "render videoCount: ${got:-?} (expected $expect)"
 [ "${got:-0}" = "$expect" ] || { echo "✗ render: footage count mismatch — do not ship"; exit 1; }
+# The canvas: the MP4 must be the size ad.config.mjs asks for (format 9:16 → 1080x1920); the
+# engine renders the index.html root size, which comes from the STORYBOARD `format:`.
+want=$(node --input-type=module -e "const { config } = await import('$SKILL/scripts/timing.mjs'); const { formatOf } = await import('$SKILL/scripts/format.mjs'); console.log(formatOf(config).name)")
+size=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "$out")
+echo "render size: $size (config $want)"
+[ "$size" = "$want" ] || { echo "✗ render: $size is not the configured $want — STORYBOARD format?"; exit 1; }
 # Loudness to the destination (research: YouTube ≈ −14 LUFS, social −16, CTV −24; peaks ≤ −1.5 dBTP).
 # The engine mixes at whatever level the bed + voice land on (a low bed rendered at −19.8).
 dest=$(grep -m1 '^destination:' BRIEF.md 2>/dev/null | awk '{print $2}' || true)

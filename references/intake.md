@@ -16,8 +16,8 @@ inferred list is where corrections happen.
 - None → you draft it (see `script.md`) and offer 5–7 hook variants to pick from.
 - Any must-say lines, numbers, or claims? Any words to avoid?
 
-## 3. Format
-- Where will it run? A) YouTube / site embed 16:9 · B) LinkedIn / X feed 1:1 · C) Shorts / Reels / TikTok 9:16 · D) several
+## 3. Format — always ask, never infer
+- **Which format?** A) 16:9 landscape (YouTube / site embed) · B) 9:16 vertical (Reels / Shorts / TikTok) · C) 1:1 square (LinkedIn / X feed) · D) several. Ask this even when the destination sounds obvious. It decides how the takes are filmed (uiScale, which column the crops use, one landscape panel or none) and how every frame is laid out, so a wrong guess means re-filming. It goes in the brief as `aspect`, before any capture.
 - Length? Default 20–30s. Ads under 15s carry one beat; over 40s need a second idea.
 
 ## 4. Style
@@ -50,7 +50,7 @@ Check: text on the accent colour passes contrast (ink-on-blue failed at ~3:1 onc
 - Brand on screen throughout? (Default: corner logo on non-app frames; the app's own logo shows in footage.)
 - End card: line + URL/CTA; background ink (default) or accent fill?
 - Spoken CTA? Research says say it + show it, ideally with an offer ("Start free at …"). Default: propose it; the user decides.
-- Formats: research says ship 16:9 + 9:16 + 1:1 (vertical lifted Shorts view rate > 40%). Only 16:9 is built today — say so.
+- Formats: research says ship 16:9 + 9:16 + 1:1 (vertical lifted Shorts view rate > 40%). 16:9 and 9:16 are built and verified; 1:1 / 4:5 take the same keys but haven't shipped yet (`aspect` in ad.config.mjs, a crop or panel per shot — SKILL.md "Vertical"); 9:16 frames are re-laid out, so budget a pass per format.
 - Thumbnail: frame 0 is composed as the thumbnail by default — any preference for what it shows?
 
 ## 9. Run shape

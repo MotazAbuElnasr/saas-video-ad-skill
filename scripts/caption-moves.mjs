@@ -17,6 +17,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { config, cue, dur, meta } from './timing.mjs';
 import { scriptFaces } from './frame-kit.mjs';
+import { formatOf } from './format.mjs';
 
 const p = 'compositions/captions.html';
 if (!existsSync(p)) process.exit(0);
@@ -63,6 +64,19 @@ if (script && !html.includes('/* script faces */'))
   html = html.replace('<style>', `<style>\n      /* script faces */ ${scriptFaces(config.fonts).join(' ')}`);
 if (/^(ar|he|fa|ur)\b/.test(config.voice?.lang ?? '') && !html.includes('/* rtl */'))
   html = html.replace('  .caption-group {', '  /* rtl */ .caption-group { direction: rtl; } .caption-group, .caption-word { letter-spacing: 0 !important; }\n  .caption-group {');
+
+// ── band in the safe zone (vertical / square) ──
+// The engine puts the band in the bottom 16.7% of the canvas — on 1080×1920 that's y 1600–1920,
+// under TikTok/Reels' caption + handle. Lift it so its bottom sits on the safe zone's bottom edge,
+// and narrow it clear of the right-hand button column. config.captionBand = { top, height } overrides.
+const fmt = formatOf(config);
+if (!fmt.landscape || config.captionBand) {
+  const height = config.captionBand?.height ?? Math.round(200 * fmt.scale);
+  const top = config.captionBand?.top ?? fmt.H - fmt.safe.bottom - height;
+  html = html.replace(/--cap-band-top: [^;]+;/, `--cap-band-top: ${top}px;`).replace(/--cap-band-height: [^;]+;/, `--cap-band-height: ${height}px;`);
+  html = html.replace(/\n\s*\/\* format band \*\/[^\n]*/, '');
+  html = html.replace('<style>', `<style>\n      /* format band */ .caption-stage { left: ${fmt.safe.left}px !important; right: ${fmt.safe.right}px !important; }`);
+}
 
 // ── moves / hides ──
 const first = (n) => meta().voices.find((v) => v.frame === n)?.words[0]?.start ?? 0;

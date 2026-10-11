@@ -7,6 +7,8 @@
 set -euo pipefail
 SKILL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PLV="${PLV_SCRIPTS:-$HOME/.claude/skills/product-launch-video/scripts}"
+# the canvas size: ad.config.mjs format must match the STORYBOARD `format:` (assembler + captions read that)
+node "$SKILL/scripts/format.mjs" --check
 [[ " $* " == *" --no-bake "* ]] || node "$SKILL/scripts/bake-clips.mjs"
 node .hyperframes/gen-frames.mjs
 if [[ " $* " != *" --no-captions "* ]]; then

@@ -26,6 +26,7 @@ UI sounds, subtitles. The GIF is a silent preview, because GitHub only plays vid
 | `capture/demo.config.ts`, `mock.ts` | video-demo workspace | build, seeded storage, mocked network for the aro.day repo |
 | `capture/state.ts` | workspace `seed/` | the seeded app state (7h of work after 2h of meetings) |
 | `capture/ad-fit.scene.ts` | workspace `scenes/` | three one-take scenes: the day, drag → conflict → red, move to Thursday |
+| `ad.config.vertical.mjs`, `gen-frames.vertical.mjs` | project root, `.hyperframes/` | the 9:16 cut of the same ad: `aspect: '9:16'`, a stage panel for the whole-app beats (with a push onto the meter), `crop` for the detail beats, type inside the safe zone; STORYBOARD `format: 1080x1920`. Render: `vertical-strip.jpg` |
 
 ## How it went from v1 to v6
 The user's notes, in order: too slow and robotic → promo style; no comparison opener; male

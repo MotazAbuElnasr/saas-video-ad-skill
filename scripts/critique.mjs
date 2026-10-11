@@ -6,10 +6,12 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { config, meta } from './timing.mjs';
+import { containCam, cropCam, formatOf, resolveCam, sourceSize, viewOf } from './format.mjs';
 
 const args = process.argv.slice(2);
 const renderPath = args.includes('--render') ? args[args.indexOf('--render') + 1] : null;
 const out = [];
+const fmt = formatOf(config);
 const add = (level, id, msg, note, fix) => out.push({ level, id, msg, note, fix });
 
 const m = meta();
@@ -17,7 +19,7 @@ const voices = m.voices.slice().sort((a, b) => a.frame - b.frame);
 const spoken = (v) => v.words.map((w) => w.text).join(' ');
 const sb = existsSync('STORYBOARD.md') ? readFileSync('STORYBOARD.md', 'utf8') : '';
 const frameIds = [...sb.matchAll(/src: compositions\/frames\/([\w-]+)\.html/g)].map((x) => x[1]);
-const footageIds = new Set(Object.keys(config.shots ? config.shots({ dur: () => 1, cue: () => 0, marks: config.marks ?? {}, full: (s, f, d, e = {}) => ({ src: s, from: f, dur: d, W: 1920, H: 1080, ...e }), config }) : {}));
+const footageIds = new Set(Object.keys(config.shots ? config.shots({ dur: () => 1, cue: () => 0, marks: config.marks ?? {}, full: (s, f, d, e = {}) => ({ src: s, from: f, dur: d, W: fmt.W, H: fmt.H, ...e }), config }) : {}));
 
 // ── Script / voice ──────────────────────────────────────────────────────────
 // listen.mjs (run by voice.mjs): a listener heard each take against its script line.
@@ -117,7 +119,7 @@ if (voices[0] && voices[0].duration_s > 4.0) add('WARN', 'slow-hook', `hook fram
 
 // ── Footage framing ─────────────────────────────────────────────────────────
 const shots = config.shots ? config.shots({ dur: (n) => voices.find((x) => x.frame === n)?.duration_s ?? 1,
-  cue: () => 0, marks: config.marks ?? {}, full: (src, from, dur, e = {}) => ({ src, from, dur, W: 1920, H: 1080, cam0: { s: 1 }, moves: [], ...e }), config }) : {};
+  cue: () => 0, marks: config.marks ?? {}, full: (src, from, dur, e = {}) => ({ src, from, dur, W: fmt.W, H: fmt.H, ...(fmt.name === '1920x1080' ? { cam0: { s: 1 } } : {}), moves: [], ...e }), config }) : {};
 const list = Object.entries(shots);
 // Transitions next to footage must be cuts: a crossfade only fades the frame wrappers — the
 // hoisted footage isn't inside them and stops at its own duration (blank board, "muddy dissolve").
@@ -142,8 +144,13 @@ for (const [id, s] of list) {
 for (const b of beats) if (b.dur < 2.0)
   add('WARN', 'beat-too-short', `${b.ids.join(' + ')}: ${b.dur.toFixed(2)}s of footage — too fast to follow`, '"very fast cut"', 'lengthen the line or pad a tail');
 for (const [id, s] of list) {
-  const fit = Math.min(s.W / 1920, s.H / 1080);
-  const maxS = Math.max(s.cam0?.s ?? fit, ...(s.moves ?? []).map((mv) => mv.to.s));
+  // the shot's own framing is "no zoom": the source fitted (16:9), or its crop / the contained source
+  // when it is reframed for another canvas (bake-clips' reframe path; crops are cover-fit)
+  const { SW, SH } = sourceSize(`assets/${s.src}`), { VW, VH } = viewOf(s, SW, SH);
+  const reframe = !!s.crop || VW !== SW || VH !== SH, contain = containCam(SW, SH, VW, VH);
+  const fit = reframe ? (s.crop ? cropCam(s.crop, VW, VH).s : contain.s) : Math.min(s.W / SW, s.H / SH);
+  const s0 = reframe ? resolveCam(s.crop ? { crop: s.crop } : s.cam0, VW, VH, contain).s : (s.cam0?.s ?? fit);
+  const maxS = Math.max(s0, ...(s.moves ?? []).map((mv) => (reframe ? resolveCam(mv.to, VW, VH, contain).s : mv.to.s)));
   // Zoom is contextual: fine to make something small readable while nothing moves there;
   // a FAIL only when a move overlaps a gesture (the "hard to follow" case).
   const zoom = maxS / fit;
@@ -152,7 +159,14 @@ for (const [id, s] of list) {
   if (hit) add('FAIL', 'zoom-during-gesture', `${id}: camera moves during "${hit.name}"`, '"zooming in and out make it hard to follow what\'s happening"', 'move before/after the gesture, or hold wide');
   else if (zoom > 2.0) add('WARN', 'zoom', `${id}: zooms ${zoom.toFixed(1)}× — check it doesn't hide what the voice describes`, '"it really depends" — zoom to make something readable, not to decorate', 'ease in, hold, ease out before the next action');
   if ((s.moves ?? []).length > 2) add('WARN', 'camera-busy', `${id}: ${s.moves.length} camera moves in one shot`, '"zooming in and out"', 'one move per beat');
-  if (s.W !== 1920 || s.H !== 1080) add('WARN', 'not-full-screen', `${id}: footage ${s.W}×${s.H}, not full screen`, '"can we keep this full screen the full demo"', 'full(...)');
+  if (s.W !== fmt.W || s.H !== fmt.H) add('WARN', 'not-full-screen', `${id}: footage ${s.W}×${s.H}, not full screen (canvas ${fmt.name})`, '"can we keep this full screen the full demo"', 'full(...)');
+  // another canvas: every shot needs its own framing (a static crop around the action, research B)
+  if (fmt.name !== '1920x1080' && !s.crop && !s.cam0 && !s.stage)
+    add('WARN', 'letterboxed', `${id}: no crop — the whole app sits letterboxed in ${fmt.name}, UI text too small to read on a phone`, 'research: 9:16 beat letterboxed by 91%', 'crop: [x, y, w, h] (source px) around the action');
+  if (fmt.vertical && s.stage) {
+    const k = Math.min(s.W / VW, s.H / VH), pw = VW * k * (s.stage.s ?? 0.74);
+    if (pw > 1000 * fmt.scale) add('WARN', 'panel-wide', `${id}: stage panel ${Math.round(pw)}px wide in a ${fmt.W}px canvas`, 'vertical: the panel floats with margins', 'stage.s so the panel is ≤ ~1000px');
+  }
 }
 for (const g of config.gestures ?? []) {
   for (const [i, [id, s]] of list.entries()) {
@@ -193,6 +207,20 @@ for (const f of frameIds) {
     const t = txt.trim();
     if (t.length > 42) add('WARN', 'card-chars', `${f}: "${t}" is ${t.length} chars (> 42 per line)`, 'research: Netflix subtitle rule', 'shorten');
     if (t.split(/\s+/).length > 7) add('WARN', 'card-words', `${f}: on-screen line "${t}" > 7 words`, 'cards are glanced, not read', 'cut to ≤ 7 words');
+  }
+  // Safe zone (vertical / square): text, cards and the logo stay out of the platform UI — the top
+  // (search/tabs), bottom (caption + handle) and right (buttons) bands (best-practices #23–24).
+  if (fmt.safe.top || fmt.safe.bottom || fmt.safe.right) {
+    for (const [, sel, body] of html.matchAll(/#(f[\w-]+)\s*\{([^}]*)\}/g)) {
+      if (/-(bg|flash|shot|all)$/.test(sel)) continue;
+      const el = html.match(new RegExp(`<[^>]*id="${sel}"[^>]*>`))?.[0] ?? '';
+      if (!/class="[^"]*(-t|-label|-card|f-bug)\b/.test(el) && !/-bug$/.test(sel)) continue;
+      const v = (k) => +(body.match(new RegExp(`(?:^|[;\\s])${k}:\\s*(-?[\\d.]+)px`))?.[1] ?? NaN);
+      const top = v('top'), right = v('right'), bottom = v('bottom');
+      const bad = [top < fmt.safe.top && `top ${top} < ${fmt.safe.top}`, top > fmt.H - fmt.safe.bottom && `top ${top} > ${fmt.H - fmt.safe.bottom}`,
+        bottom < fmt.safe.bottom && `bottom ${bottom} < ${fmt.safe.bottom}`, right < fmt.safe.right && `right ${right} < ${fmt.safe.right}`].filter(Boolean);
+      if (bad.length) add('WARN', 'safe-zone', `${f}: #${sel} outside the ${fmt.name} safe zone (${bad.join(', ')})`, 'research: platform UI covers the edges (TikTok/Reels/Shorts)', 'kit.safeBox / safe.top + px');
+    }
   }
   // Hold: a card revealed at T must stay ≥ max(1s, chars/18) — Netflix reading speed.
   for (const m2 of html.matchAll(/slam\('#(f[\w-]+)', ([\d.]+)\)/g)) {
