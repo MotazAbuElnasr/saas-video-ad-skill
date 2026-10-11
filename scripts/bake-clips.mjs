@@ -50,7 +50,8 @@ const BAKE = 'v2'; // v2: setpts from 0 (stage shots lost the panel on frame 0)
 // inside the shot (seconds; default the whole shot) — e.g. hold the filled week, then pull back.
 // s is the panel's LARGEST size in the shot: z ≤ 1 shrinks it (z > 1 upscales the footage — soft).
 // rim: a thin light edge (alpha 0–1) — a dark app on a dark ground lost its outline (the shadow
-// doesn't show on navy); 0 turns it off.
+// doesn't show on navy); 0 turns it off. vignette: false keeps the ground flat — a drawn frame next to the
+// panel (CSS, no vignette) then shares its backdrop across the cut.
 const STAGE = { s: 0.74, d: 2600, radius: 18, shadow: 0.6, rim: 0.22, rimColor: '#ffffff', from: { ry: -14, rx: 6, z: 0.98 }, to: { ry: -7, rx: 3, z: 1.02 } };
 // The panel's size: its view (the footage frame — the canvas for 16:9 in 16:9; a landscape app in a
 // vertical canvas is a 1080-wide view) contained in the canvas, times s.
@@ -86,7 +87,7 @@ function stageGraph(shot, inner, view) {
     `[s0]colorchannelmixer=rr=0:gg=0:bb=0:aa=${st.shadow},boxblur=36:2[sh]`,
     `gradients=s=${W}x${H}:c0=${hex(st.bg[0])}:c1=${hex(st.bg[1])}:x0=0:y0=0:x1=${W}:y1=${H}:n=2:speed=0:d=${shot.dur + 1}:r=60,format=rgba[bg]`,
     '[bg][sh]overlay=x=0:y=46[b1]',
-    '[b1][fg]overlay=0:0,vignette=PI/5,format=yuv420p[v]',
+    `[b1][fg]overlay=0:0${st.vignette === false ? '' : ',vignette=PI/5'},format=yuv420p[v]`,
   ].join(';');
 }
 // the rounded-corner mask (and the rim: the mask's outer 3·s px) for a panel size, made once

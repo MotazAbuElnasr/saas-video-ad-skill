@@ -99,7 +99,9 @@ for (const v of voices) {
   if (v.frame < voices.length && breath < 0.12)
     add('WARN', 'no-breath', `${id}: line ends ${breath.toFixed(2)}s before the next one`, 'cuts on the last syllable feel abrupt', 'small tail pad');
 }
-const lastFootage = fp.at(-1);
+// config.payoffFrame: the frame that carries the payoff when it is drawn, not the last footage frame (the
+// drawn-story ads: a 1s hold on the proof panel before it is only dead air)
+const lastFootage = config.payoffFrame ? voices.find((v) => v.frame === config.payoffFrame) : fp.at(-1);
 if (lastFootage) {
   const tail = lastFootage.duration_s - lastFootage.words.at(-1).end;
   if (tail < 1.0) add('FAIL', 'payoff-hold', `payoff frame ${frameIds[lastFootage.frame - 1]} holds ${tail.toFixed(2)}s after the last word (< 1.0s)`,
