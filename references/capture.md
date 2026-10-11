@@ -26,6 +26,12 @@ Fill `demo.config.ts` (see `examples/aroday-it-fits/capture/demo.config.ts`):
 Smoke test: `DEMO_VOICE=0 DEMO_TOUR=0 $VD/scripts/demo --grep smoke` (run from the product repo),
 then READ the still.
 
+## Vertical ads (9:16): film a tall window
+`DEMO_STAGE=tall` (the aro.day workspace's `demo.config.ts` maps it to a 1080×1920 stage) + `uiScale: 1.4` in the
+scene's preferences: the take is already phone-shaped, so 9:16 crops of 1.7–2.5× read without upscaling a landscape
+source. Before filming, sketch where each beat's element sits in the 1080×1920 take and in the 9:16 frame (lessons
+#72, #76): anything at the app's bottom edge (toasts) becomes a stage panel; long menus become a 3-row panel (#71).
+
 ## Seed for the script
 The numbers in the script must be the numbers the UI computes. Read the app's own logic for
 the metric (aro.day: `src/lib/day-capacity.ts`: work window − meetings = available; scheduled
