@@ -54,6 +54,8 @@ in whole numbers and match the seeded data; spell the brand for TTS ("aro dot da
 let captions show it as written. Present it as a table: on-screen | voice | why.
 **A localized ad is written, not translated** — same story and numbers, the dialect's own words, no
 calques or AI phrasing (script.md, "Another language"); show the lines with an English gloss first.
+A dialect script can come from Gemini (Antigravity) and a blind score from Codex, each in a fresh
+session: [references/writers.md](references/writers.md) (`gemini-ask.sh`, `codex-ask.sh`).
 **Gate:** the user approved the exact words. (TTS costs credits — never generate a draft voice.)
 
 ### 3. Capture — real footage, one clip per beat
@@ -252,7 +254,10 @@ Example: `examples/aroday-it-fits/ad.config.vertical.mjs` + `gen-frames.vertical
 | `scripts/scan-marks.mjs` | measure a REGION's changes (cursor, menu, drawer, a press) — re-scan after every re-film |
 | `scripts/check-split.mjs` | self-check for the one-take cutter (run after touching `gemini-voice.mjs`) |
 | `scripts/gif-preview.sh` | silent GIF preview for READMEs (GitHub won't play repo-hosted MP4s inline) |
+| `scripts/gemini-ask.sh` / `gemini-read.py` | one brief → Gemini in the Antigravity app (no API key), reply saved to a file |
+| `scripts/codex-ask.sh` | one brief → a fresh read-only Codex session (blind reviewer) |
+| `animated-captions/` | companion skill: word-by-word captions on a talking-head reel (Arabic/RTL, iPhone HDR) |
 | `templates/` | `ad.config.mjs`, `gen-frames.mjs`, `capture.scene.ts` |
-| `references/` | `intake.md`, `script.md`, `capture.md`, `best-practices.md`, `lessons.md`, `critique.md` |
+| `references/` | `intake.md`, `script.md`, `capture.md`, `best-practices.md`, `lessons.md`, `critique.md`, `writers.md` |
 | `examples/aroday-it-fits/` | the full aro.day ad: config, frames, storyboard, script, capture scenes, the MP4 |
 | `examples/aroday-take-a-break/`, `examples/aroday-schedule-for-me/`, `examples/aroday-plan-my-day/` | more looks of the series (calm amber; terminal + glitch; mocha + editorial wipes) |
