@@ -98,6 +98,13 @@ A full rebuild of the example takes about 30s of machine time (render ≈ 22s).
 git clone https://github.com/MotazAbuElnasr/saas-video-ad-skill ~/.claude/skills/saas-video-ad
 ```
 
+The repo also carries a companion skill, **animated-captions** (word-by-word captions burned onto a
+talking-head reel: Arabic and other RTL speech, dialect fixes, iPhone HDR kept as HDR). Link it once:
+
+```bash
+ln -s ~/.claude/skills/saas-video-ad/animated-captions ~/.claude/skills/animated-captions
+```
+
 ## Use
 
 Ask Claude Code from your app's repo:
@@ -120,7 +127,9 @@ approval before it films or buys any TTS.
 | [`SKILL.md`](SKILL.md) | the run, step by step, with gates |
 | [`references/`](references) | intake questions, script rules, capture guide, **best practices (research + sources)**, **lessons learned**, the critique rubric |
 | [`scripts/`](scripts) | `ad.sh` (one command per stage), timing, shot baking, cached voice, voice pads, caption merge, frame kit, critic, build / render / measure |
+| [`references/writers.md`](references/writers.md) | getting a script from Gemini (Antigravity app, no API key) and a blind review from Codex: `scripts/gemini-ask.sh`, `scripts/codex-ask.sh` |
 | [`templates/`](templates) | `ad.config.mjs`, `gen-frames.mjs`, `capture.scene.ts` |
+| [`animated-captions/`](animated-captions) | companion skill: animated word-by-word captions for talking-head reels |
 | [`examples/aroday-it-fits/`](examples/aroday-it-fits) | a complete ad: config, frames, storyboard, script, capture scenes, the MP4 |
 | [`examples/aroday-take-a-break/`](examples/aroday-take-a-break), [`examples/aroday-schedule-for-me/`](examples/aroday-schedule-for-me) | two more looks of the series, each after a fresh-eyes review round |
 
